@@ -34,6 +34,12 @@ class Scraper (WebScraping):
                 "league": "div.icon--flag div span:nth-child(2)",
                 "team_home": ".event__participant.event__participant--home",
                 "team_away": ".event__participant.event__participant--away",
+                "time": 'div.eventSubscriber + div',
+                "c1": 'div.event__odd--odd1',
+                "c2": 'div.event__odd--odd2',
+                "c3": 'div.event__odd--odd3',
+                "score_home": '.event__score.event__score--home',
+                "score_away": '.event__score.event__score--away',
             }
         }
         self.pages = {
@@ -209,7 +215,7 @@ class Scraper (WebScraping):
     def scrape_basic_general (self):
         """ Scrape general data (teams and ids), and save in db """
         
-        logger.info ("\nScraping teams and ids...")
+        logger.info ("\nScraping teams and ids in basic...")
         
         # Loop each match group
         for match_group in self.matches_groups:
@@ -222,9 +228,9 @@ class Scraper (WebScraping):
             selector_home_teams = f"{selector_matches} {self.selectors['team_home']}"
             selector_away_teams = f"{selector_matches} {self.selectors['team_away']}"
             
+            ids = self.get_attribs (selector_matches, "id")
             home_teams = self.get_texts (selector_home_teams)
             away_teams = self.get_texts (selector_away_teams)
-            ids = self.get_attribs (selector_matches, "id")
             
             # Format and save data
             for index, id in enumerate (ids):               
@@ -239,12 +245,66 @@ class Scraper (WebScraping):
         logger.info ("\tSaving in db...")
         self.db.save_basic_general (self.matches_groups)            
     
-    # def scrape_basic_quotes (self):
-    #     """ Scraper quotes data () """
+    def scrape_basic_oods (self):
+        """ Scraper odds data (time, c1, c2, c3) """
+        
+        logger.info ("\nScraping quotes in basic...")
+        
+        # Loop each match group
+        for match_group in self.matches_groups:
+            page_indexes = match_group["matches_indexes"]
+            first_index = page_indexes[0]
+            last_index = page_indexes[-1]
+            
+            # Get all matches data
+            selector_matches = f"{self.selectors['row']}:nth-child(n+{first_index}):nth-child(-n+{last_index})"
+            selector_time = f"{selector_matches} {self.selectors['time']}"
+            selector_c1 = f"{selector_matches} {self.selectors['c1']}"
+            selector_c2 = f"{selector_matches} {self.selectors['c2']}"
+            selector_c3 = f"{selector_matches} {self.selectors['c3']}"
+            selector_score_home = f"{selector_matches} {self.selectors['score_home']}"
+            selector_score_away = f"{selector_matches} {self.selectors['score_away']}"
+            
+            times = self.get_texts (selector_time)
+            c1s = self.get_texts (selector_c1)
+            c2s = self.get_texts (selector_c2)
+            c3s = self.get_texts (selector_c3)
+            scores_home = self.get_texts (selector_score_home)
+            scores_away = self.get_texts (selector_score_away)
+            
+            for index, time in enumerate (times):
+                
+                # Validate if matches_data already have info
+                if len(match_group["matches_data"]) <= index:
+                    continue
+                
+                # Format score
+                score_home = scores_home[index]
+                score_away = scores_away[index]
+                if score_home != "-" and score_away != "-":
+                    score = f"{score_home} - {score_away}"
+                else: 
+                    score = "none"
+                
+                # update data in row
+                match_group["matches_data"][index]["time"] = time
+                match_group["matches_data"][index]["c1"] = c1s[index]
+                match_group["matches_data"][index]["c2"] = c2s[index]
+                match_group["matches_data"][index]["c3"] = c3s[index]
+                match_group["matches_data"][index]["score"] = score
+        
+         # Save data in db with a thread
+        logger.info ("\tSaving in db...")
+        self.db.save_basic_odds (self.matches_groups) 
+        
+        
     
 if __name__ == "__main__":
     
     scraper = Scraper()
     scraper.load_matches ()
     scraper.scrape_basic_general ()
+    
+    
+    scraper.scrape_basic_oods () 
     
