@@ -89,9 +89,9 @@ class Database (MySQL):
                 new_matches_saved += 1
         
         if new_matches_saved:
-            logger.info (f"\t{new_matches_saved} new matches saved in basic general")
+            logger.info (f"\t(basic) {new_matches_saved} new matches saved in basic general")
         else: 
-            logger.info ("\tNo new matches saved in basic general")
+            logger.info ("\t(basic) No new matches saved in general")
             
     def save_basic_odds (self, matches_groups:list):
         
@@ -129,4 +129,4 @@ class Database (MySQL):
                 
                 matches_updated += 1
         
-        logger.info (f"\t{matches_updated} matches updated in basic odds")
+        logger.info (f"\t(basic) {matches_updated} matches updated in odds")
