@@ -38,6 +38,9 @@ class Database (MySQL):
             list: list of ids
         """
         
+        if not matches_data:
+            return []
+        
         ids = list(map (lambda match: f"'{match['id']}'", matches_data))
         query = f"SELECT id_web FROM {DB_TABLE} WHERE id_web IN ({','.join(ids)})"
         matches_saved = self.run_sql (query)
@@ -70,9 +73,14 @@ class Database (MySQL):
             # Loop match
             for match_data in matches_to_save:
                 
-                id_web = match_data["id"]
-                team1 = match_data["home_team"]
-                team2 = match_data["away_team"]
+                id_web = match_data.get("id", "")
+                team1 = match_data.get("home_team", "")
+                team2 = match_data.get("away_team", "")
+                
+                # Validate data
+                if not (id_web and team1 and team2):
+                    logger.error (f"\t(basic) Can't save general match {id_web}")
+                    continue
                 
                 # Clean data
                 country = self.__clean_string__ (country)
@@ -108,12 +116,17 @@ class Database (MySQL):
             # Loop match
             for match_data in matches_to_save:
                 
-                time = match_data["time"]
-                c1 = match_data["c1"]
-                c2 = match_data["c2"]
-                c3 = match_data["c3"]
-                score = match_data["score"]
-                id_web = match_data["id"]
+                time = match_data.get("time", "")
+                c1 = match_data.get("c1", "")
+                c2 = match_data.get("c2", "")
+                c3 = match_data.get("c3", "")
+                score = match_data.get("score", "")
+                id_web = match_data.get("id", "")
+                
+                # Validate data
+                if not (id_web and time and c1 and c2 and c3):
+                    logger.error (f"\t(basic) Can't save odds match {id_web}")
+                    continue
                 
                 # Insert new match
                 query = f""" Update {DB_TABLE} 

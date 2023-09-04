@@ -1,4 +1,4 @@
-from scraping.web_scraping import WebScraping
+from selenium_wrapper.web_scraping import WebScraping
 
 import os
 import json
@@ -6,12 +6,11 @@ from time import sleep
 from dotenv import load_dotenv
 from logs import logger
 from db import Database
-from threading import Thread
+# from threading import Thread
 
 load_dotenv()
 PAGE = os.getenv("PAGE")
 HEADLESS = os.getenv("HEADLESS") == "true"
-MINUTES_REOPEN = int(os.getenv("MINUTES_REOPEN"))
 
 CURRENT_PATH = os.path.dirname(__file__)
 
@@ -21,6 +20,22 @@ THREADS_STATUS = {
 }
 
 class Scraper (WebScraping): 
+    
+    # Scraping data
+    matches_groups = []
+    """ Structure of matches_groups:
+    {
+        "country": str,
+        "league": str,
+        "matches_data": [{
+            "home_team": str, 
+            "away_team": str,
+            "id": str,
+            "index": int,
+        }],
+        "matches_indexes": [int],
+    }
+    """
     
     def __init__(self):
         """ Start scraper of the page
@@ -52,22 +67,6 @@ class Scraper (WebScraping):
             "soccer24": "https://www.soccer24.com/",
         }  
         
-        # Scraping data
-        self.matches_groups = []
-        """ Structure of matches_groups:
-        {
-            "country": str,
-            "league": str,
-            "matches_data": [{
-                "home_team": str, 
-                "away_team": str,
-                "id": str,
-                "index": int,
-            }],
-            "matches_indexes": [int],
-        }
-        """
-        
         # Filters
         self.countries = []
         self.leagues = []
@@ -90,10 +89,21 @@ class Scraper (WebScraping):
         self.required_translations = False
         if PAGE == "soccerstand":
             self.required_translations = True
+        
+        # Start scraper
+        self.__load_page__ ()
+        self.__accept_cookies__ ()
+        self.__display_events__ ()
+        
+        self.go_bottom ()
+        
+    def __load_page__ (self): 
+        """ Open browser instance and load page """
             
-        logger.info (f"\nStarting scraper for {PAGE}")
-        
-        
+        # Load page
+        super().__init__(headless=HEADLESS)
+        self.set_page (self.page)
+  
     def __accept_cookies__ (self):
         """ Click in 'accpet cookies' button if exists """
         
@@ -103,20 +113,6 @@ class Scraper (WebScraping):
         except Exception as err:
             logger.debug (f"can't click in cookies button: {err}")
             pass
-            
-    def __load_page__ (self): 
-        """ Kill open browser instances and load page """
-        
-        # Close current chrome instance
-        try:
-            self.kill ()
-        except Exception as err:
-            logger.debug (f"Can't kill chrome instance: {err}")
-            pass
-            
-        # Load page
-        super().__init__(headless=HEADLESS)
-        self.set_page (self.page)
         
     def __display_events__ (self):
         """ Show all events in table """
@@ -158,13 +154,6 @@ class Scraper (WebScraping):
         
         logger.info ("\nReading matches...")
         
-        # Start scraper
-        self.__load_page__ ()
-        self.__accept_cookies__ ()
-        self.__display_events__ ()
-        
-        self.go_bottom ()
-        
         # Loop each row for detect headers and matches
         current_match_group = {}
         max_rows = len(self.get_elems(self.selectors["row"]))
@@ -196,17 +185,34 @@ class Scraper (WebScraping):
                     is_skipping = True
                     continue
                 
-                logger.info (f"Reading matches of {country} - {league}")
-                is_skipping = False       
+                # Validate if country and league already exists
+                country_league_exist = list(filter(
+                    lambda match_group: 
+                        match_group["country"] == country and match_group["league"] == league, 
+                    Scraper.matches_groups, 
+                ))
                 
                 # Create new match group
-                self.matches_groups.append ({
-                    "country": country,
-                    "league": league,
-                    "matches_data": [],
-                    "matches_indexes": [],
-                })
-                current_match_group = self.matches_groups[-1]   
+                if country_league_exist:
+                    
+                    # Get current match group
+                    current_match_group = country_league_exist[0]
+                    
+                else:
+                
+                    logger.info (f"Reading matches of {country} - {league}")
+                    is_skipping = False       
+                    
+                    # Create new match group
+                    Scraper.matches_groups.append ({
+                        "country": country,
+                        "league": league,
+                        "matches_data": [],
+                        "matches_indexes": [],
+                    })
+                
+                    # Update current match group
+                    current_match_group = Scraper.matches_groups[-1]   
                 
             else: 
                 
@@ -214,127 +220,6 @@ class Scraper (WebScraping):
                 if is_skipping:
                     continue
                 
-                # Save match id
-                current_match_group["matches_indexes"].append (index)
-    
-    def scrape_basic_general (self):
-        """ Scrape general data (teams and ids), and save in db """
-        
-        logger.info ("\n(basic) Scraping teams and ids...")
-        
-        # Loop each match group
-        for match_group in self.matches_groups:
-            page_indexes = match_group["matches_indexes"]
-            first_index = page_indexes[0]
-            last_index = page_indexes[-1]
-            
-            # Get all matches data
-            selector_matches = f"{self.selectors['row']}:nth-child(n+{first_index}):nth-child(-n+{last_index})"
-            selector_home_teams = f"{selector_matches} {self.selectors['team_home']}"
-            selector_away_teams = f"{selector_matches} {self.selectors['team_away']}"
-            
-            ids = self.get_attribs (selector_matches, "id")
-            home_teams = self.get_texts (selector_home_teams)
-            away_teams = self.get_texts (selector_away_teams)
-            
-            # Format and save data
-            for index, id in enumerate (ids):               
-                match_group["matches_data"].append ({
-                    "home_team": home_teams[index],
-                    "away_team": away_teams[index],
-                    "id": id,
-                    "index": page_indexes[index],
-                })
-                
-        # Save data in db with a thread
-        logger.info ("\t(basic) Saving in db...")
-        self.db.save_basic_general (self.matches_groups)            
-    
-    def scrape_basic_oods (self):
-        """ Scraper odds data (time, c1, c2, c3), in loop """
-        
-        # Update global status
-        global THREADS_STATUS
-        THREADS_STATUS["basic"] = "running"
-        
-        while True:
-            
-            # End if status is ending and details already end
-            if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "end":
-                THREADS_STATUS["basic"] = "end"
-                break
-        
-            logger.info ("\n(basic) Scraping odds...")
-            
-            # Loop each match group
-            for match_group in self.matches_groups:
-                page_indexes = match_group["matches_indexes"]
-                first_index = page_indexes[0]
-                last_index = page_indexes[-1]
-                
-                # Get all matches data
-                selector_matches = f"{self.selectors['row']}:nth-child(n+{first_index}):nth-child(-n+{last_index})"
-                selector_time = f"{selector_matches} {self.selectors['time']}"
-                selector_c1 = f"{selector_matches} {self.selectors['c1']}"
-                selector_c2 = f"{selector_matches} {self.selectors['c2']}"
-                selector_c3 = f"{selector_matches} {self.selectors['c3']}"
-                selector_score_home = f"{selector_matches} {self.selectors['score_home']}"
-                selector_score_away = f"{selector_matches} {self.selectors['score_away']}"
-                
-                times = self.get_texts (selector_time)
-                c1s = self.get_texts (selector_c1)
-                c2s = self.get_texts (selector_c2)
-                c3s = self.get_texts (selector_c3)
-                scores_home = self.get_texts (selector_score_home)
-                scores_away = self.get_texts (selector_score_away)
-                
-                for index, time in enumerate (times):
-                    
-                    # Validate if matches_data already have info
-                    if len(match_group["matches_data"]) <= index:
-                        continue
-                    
-                    # Format score
-                    score_home = scores_home[index]
-                    score_away = scores_away[index]
-                    if score_home != "-" and score_away != "-":
-                        score = f"{score_home} - {score_away}"
-                    else: 
-                        score = "none"
-                    
-                    # update data in row
-                    match_group["matches_data"][index]["time"] = time
-                    match_group["matches_data"][index]["c1"] = c1s[index]
-                    match_group["matches_data"][index]["c2"] = c2s[index]
-                    match_group["matches_data"][index]["c3"] = c3s[index]
-                    match_group["matches_data"][index]["score"] = score
-            
-            # Save data in db with a thread
-            logger.info ("\t(basic) Saving in db...")
-            self.db.save_basic_odds (self.matches_groups)
-            
-            # refresh
-            scraper.refresh_selenium ()    
-
-if __name__ == "__main__":
-    
-    
-    while True:
-            
-        scraper = Scraper()
-        scraper.load_matches ()
-        scraper.scrape_basic_general ()
-        
-        # Scraper basic odds in thread
-        thread_basic_odds = Thread(target=scraper.scrape_basic_oods)
-        thread_basic_odds.start()
-        
-        # End threads after reopen time
-        sleep (MINUTES_REOPEN * 60)
-        logger.info ("\nRestarting scraper...")
-        THREADS_STATUS["basic"] = "ending"
-        THREADS_STATUS["details"] = "end"
-        
-        # Wait until threads end
-        thread_basic_odds.join()
-        print ()
+                # Save match id if exists
+                if index not in current_match_group["matches_indexes"]:
+                    current_match_group["matches_indexes"].append (index)
