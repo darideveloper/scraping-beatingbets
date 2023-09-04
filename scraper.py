@@ -5,6 +5,7 @@ import json
 from time import sleep
 from dotenv import load_dotenv
 from logs import logger
+from db import Database
 
 load_dotenv()
 
@@ -19,6 +20,9 @@ class Scraper (WebScraping):
         """ Start scraper of the page
         """
         
+        # Instance database
+        self.db = Database ()
+        
         # Css selectors 
         self.selectors_pages = {
             "soccer24": {
@@ -27,7 +31,9 @@ class Scraper (WebScraping):
                 "class_event_header": "event__header",
                 "row": "#live-table > section > div > div > div",
                 "country": "div.icon--flag div span:nth-child(1)",
-                "league": "div.icon--flag div span:nth-child(2)"
+                "league": "div.icon--flag div span:nth-child(2)",
+                "team_home": ".event__participant.event__participant--home",
+                "team_away": ".event__participant.event__participant--away",
             }
         }
         self.pages = {
@@ -36,6 +42,19 @@ class Scraper (WebScraping):
         
         # Scraping data
         self.matches_groups = []
+        """ Structure of matches_groups:
+        {
+            "country": str,
+            "league": str,
+            "matches_data": [{
+                "home_team": str, 
+                "away_team": str,
+                "id": str,
+                "index": int,
+            }],
+            "matches_indexes": [int],
+        }
+        """
         
         # Filters
         self.countries = []
@@ -61,7 +80,7 @@ class Scraper (WebScraping):
             self.required_translations = True
             
             
-        logger.info (f"Starting scraper for {PAGE}")
+        logger.info (f"\nStarting scraper for {PAGE}")
         
         
     def __accept_cookies__ (self):
@@ -126,7 +145,7 @@ class Scraper (WebScraping):
     def load_matches (self):
         """ Load matches and save country-ligue relation """
         
-        print ("Reading matches...")
+        logger.info ("\nReading matches...")
         
         # Start scraper
         self.__load_page__ ()
@@ -161,15 +180,10 @@ class Scraper (WebScraping):
                     league = self.translate_leagues.get(league, league)
                 
                 # Validate countries and leagues
-                if country not in self.countries:
-                    logger.debug (f"Country {country} not in filters, skipped")
+                if country not in self.countries or league not in self.leagues:
+                    logger.debug (f"Skipping matches of {country} - {league}")
                     is_skipping = True
                     continue
-                
-                if league not in self.leagues:
-                    logger.debug (f"League {league} not in filters, skipped")
-                    is_skipping = True
-                    continue         
                 
                 logger.info (f"Reading matches of {country} - {league}")
                 is_skipping = False       
@@ -179,7 +193,7 @@ class Scraper (WebScraping):
                     "country": country,
                     "league": league,
                     "matches_data": [],
-                    "matches_indexs": [],
+                    "matches_indexes": [],
                 })
                 current_match_group = self.matches_groups[-1]   
                 
@@ -190,11 +204,47 @@ class Scraper (WebScraping):
                     continue
                 
                 # Save match id
-                current_match_group["matches_indexs"].append (index)
+                current_match_group["matches_indexes"].append (index)
+    
+    def scrape_basic_general (self):
+        """ Scrape general data (teams and ids), and save in db """
         
+        logger.info ("\nScraping teams and ids...")
+        
+        # Loop each match group
+        for match_group in self.matches_groups:
+            page_indexes = match_group["matches_indexes"]
+            first_index = page_indexes[0]
+            last_index = page_indexes[-1]
+            
+            # Get all matches data
+            selector_matches = f"{self.selectors['row']}:nth-child(n+{first_index}):nth-child(-n+{last_index})"
+            selector_home_teams = f"{selector_matches} {self.selectors['team_home']}"
+            selector_away_teams = f"{selector_matches} {self.selectors['team_away']}"
+            
+            home_teams = self.get_texts (selector_home_teams)
+            away_teams = self.get_texts (selector_away_teams)
+            ids = self.get_attribs (selector_matches, "id")
+            
+            # Format and save data
+            for index, id in enumerate (ids):               
+                match_group["matches_data"].append ({
+                    "home_team": home_teams[index],
+                    "away_team": away_teams[index],
+                    "id": id,
+                    "index": page_indexes[index],
+                })
+                
+        # Save data in db with a thread
+        logger.info ("\tSaving in db...")
+        self.db.save_basic_general (self.matches_groups)            
+    
+    # def scrape_basic_quotes (self):
+    #     """ Scraper quotes data () """
     
 if __name__ == "__main__":
     
     scraper = Scraper()
     scraper.load_matches ()
+    scraper.scrape_basic_general ()
     
