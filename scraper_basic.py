@@ -48,7 +48,7 @@ class ScraperBasic (Scraper):
                     "index": page_indexes[index],
                 })
                 
-        # Save data in db with a thread
+        # Save data in db 
         logger.info ("\t(basic) Saving in db...")
         self.db.save_basic_general (Scraper.matches_groups)            
     
@@ -62,8 +62,8 @@ class ScraperBasic (Scraper):
         while True:
             
             # End if status is ending and details already end
-            if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "end":
-                THREADS_STATUS["basic"] = "end"
+            if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "ended":
+                THREADS_STATUS["basic"] = "ended"
                 break
         
             logger.info ("\n(basic) Scraping odds...")
@@ -111,7 +111,7 @@ class ScraperBasic (Scraper):
                     match_group["matches_data"][index]["c3"] = c3s[index]
                     match_group["matches_data"][index]["score"] = score
             
-            # Save data in db with a thread
+            # Save data in db
             logger.info ("\t(basic) Saving in db...")
             self.db.save_basic_odds (Scraper.matches_groups)
             

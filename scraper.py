@@ -61,11 +61,73 @@ class Scraper (WebScraping):
                 "c3": 'div.event__odd--odd3',
                 "score_home": '.event__score.event__score--home',
                 "score_away": '.event__score.event__score--away',
+                "over_under": {
+                    "bookmarker": ".oddsTab__tableWrapper .ui-table.oddsCell__odds",
+                    "base": ".oddsTab__tableWrapper .ui-table.oddsCell__odds",
+                    "total": "div.ui-table__body > div.ui-table__row:nth-child(1) > span",
+                    "over": "div.ui-table__body > div.ui-table__row:nth-child(1) > a:nth-child(3) > span",
+                    "under": "div.ui-table__body > div.ui-table__row:nth-child(1) > a:nth-child(4) > span",                     
+                },
+                "double_chance": {
+                    "base": "#detail > div:nth-child(7) > div.oddsTab__tableWrapper > div > div.ui-table__body > div:nth-child(1) > a",
+                    "sufix": "> span",
+                },
+                "both_teams_to_score": {
+                    "base": ".oddsTab__tableWrapper div div.ui-table__body > div.ui-table__row:nth-child(1) a.oddsCell__odd",
+                    "sufix": "> span",
+                }
+            }, 
+            "soccerstand": {
+                "cookies": "#onetrust-accept-btn-handler",
+                "display_events": ".event__expander.icon--expander.expand",
+                "class_event_header": "event__header",
+                "row": "#live-table > section > div > div > div",
+                "country": "div.icon--flag div span:nth-child(1)",
+                "league": "div.icon--flag div span:nth-child(2)",
+                "team_home": ".event__participant.event__participant--home",
+                "team_away": ".event__participant.event__participant--away",
+                "time": 'div.eventSubscriber + div',
+                "c1": 'div.event__odd--odd1',
+                "c2": 'div.event__odd--odd2',
+                "c3": 'div.event__odd--odd3',
+                "score_home": '.event__score.event__score--home',
+                "score_away": '.event__score.event__score--away',
+                
+                
+                "over_under": {
+                    "bookmarker": "div.oddsTab__tableWrapper > div > div.ui-table__body > div",
+                    "base": ".oddsTab__tableWrapper .ui-table.oddsCell__odds",
+                    "total": "div.ui-table__body > div.ui-table__row:nth-child(1) > span",
+                    "over": "div.ui-table__body > div.ui-table__row:nth-child(1) > a:nth-child(3) > span",
+                    "under": "div.ui-table__body > div.ui-table__row:nth-child(1) > a:nth-child(4) > span",                     
+                },
+                "double_chance": {
+                    "base": ".oddsTab__tableWrapper div div.ui-table__body > div.ui-table__row:nth-child(1) a.oddsCell__odd",
+                    "sufix": "> span",
+                },
+                "both_teams_to_score": {
+                    "base": ".oddsTab__tableWrapper div div.ui-table__body > div.ui-table__row:nth-child(1) a.oddsCell__odd",
+                    "sufix": "> span",
+                }
             }
         }
+        
         self.pages = {
             "soccer24": "https://www.soccer24.com/",
         }  
+        
+        self.odds_links_pages = {
+            "soccer24": {
+                "dc": "/#/odds-comparison/double-chance/full-time", 
+                "ou": "/#/odds-comparison/over-under/full-time", 
+                "bts": "/#/odds-comparison/both-teams-to-score/full-time"
+            },
+            "soccerstand": {
+                "dc": "/#/comparacion-cuotas/doble-oportunidad/partido", 
+                "ou": "/#/comparacion-cuotas/mas-de-menos-de/partido", 
+                "bts": "/#/comparacion-cuotas/ambos-equipos-marcaran/partido"
+            }
+        }
         
         # Filters
         self.countries = []
@@ -80,8 +142,9 @@ class Scraper (WebScraping):
         # Get current page and selectors
         self.page = self.pages.get(PAGE, None)
         self.selectors = self.selectors_pages.get(PAGE, None)
+        self.odds_links = self.odds_links_pages.get(PAGE, None)
         
-        if not self.page or not self.selectors:
+        if not self.page or not self.selectors or not self.odds_links:
             logger.error (f"Invalid page {PAGE}. Check your .env file")
             quit ()
             
