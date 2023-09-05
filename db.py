@@ -128,6 +128,22 @@ class Database (MySQL):
                     logger.error (f"(basic) Can't save odds match {id_web}")
                     continue
                 
+                # Detect if c1, c2 and c3 are "-"
+                if c1 == "-" and c2 == "-" and c3 == "-":
+                    
+                    # Delete from matches_groups
+                    pos_match = matches_data.index (match_data)
+                    del matches_data[pos_match]
+                    del match_group["matches_indexes"][pos_match]
+                    
+                    # Delete from db
+                    query = f"DELETE FROM {DB_TABLE} WHERE id_web = '{id_web}'"
+                    self.run_sql (query)
+                    
+                    logger.info (f"(basic) Match {id_web} deleted (all quotes are '-')")
+                    
+                    continue
+                
                 # Insert new match
                 query = f""" Update {DB_TABLE} 
                     SET 
