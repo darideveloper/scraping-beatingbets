@@ -20,6 +20,10 @@ class ScraperBasic (Scraper):
             
             # Indexes
             page_indexes = match_group["matches_indexes"]
+            
+            if not page_indexes:
+                continue
+            
             first_index = page_indexes[0]
             last_index = page_indexes[-1]
             
@@ -70,7 +74,13 @@ class ScraperBasic (Scraper):
             
             # Loop each match group
             for match_group in Scraper.matches_groups:
+                
+                # Get indexes
                 page_indexes = match_group["matches_indexes"]
+                
+                if not page_indexes:
+                    continue
+                
                 first_index = page_indexes[0]
                 last_index = page_indexes[-1]
                 
