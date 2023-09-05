@@ -63,10 +63,10 @@ class Scraper (WebScraping):
                 "score_away": '.event__score.event__score--away',
                 "over_under": {
                     "bookmarker": ".oddsTab__tableWrapper .ui-table.oddsCell__odds",
-                    "base": ".oddsTab__tableWrapper .ui-table.oddsCell__odds",
-                    "total": "div.ui-table__body > div.ui-table__row:nth-child(1) > span",
-                    "over": "div.ui-table__body > div.ui-table__row:nth-child(1) > a:nth-child(3) > span",
-                    "under": "div.ui-table__body > div.ui-table__row:nth-child(1) > a:nth-child(4) > span",                     
+                    "base": ".ui-table__row",
+                    "total": "span.oddsCell__noOddsCell",
+                    "over": "a:nth-child(3) > span",
+                    "under": "a:nth-child(4) > span",                     
                 },
                 "double_chance": {
                     "base": "#detail > div:nth-child(7) > div.oddsTab__tableWrapper > div > div.ui-table__body > div:nth-child(1) > a",

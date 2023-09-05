@@ -36,9 +36,15 @@ class ScraperDetails (Scraper):
         selector_bookmarker = selectors_ou["bookmarker"]
         bookmarkers = self.get_elems(selector_bookmarker)
         
+        over_15 = ""
+        over_25 = ""
+        under_25 = ""
+        under_35 = ""
+        
         for index in range (1, len(bookmarkers)): 
             
-            selector_base = f"{selectors_ou['base']}:nth-child({index})"
+            
+            selector_base = f"{selector_bookmarker}:nth-child({index}) {selectors_ou['base']}:nth-child(1)"
                                             
             selector_total = f"{selector_base} {selectors_ou['total']}"
             total = self.get_text (selector_total)
@@ -55,6 +61,9 @@ class ScraperDetails (Scraper):
             
             if total == "3.5": 
                 under_35 = self.get_text(selector_under)    
+                
+            if over_15 and over_25 and under_25 and under_35:
+                break
         
         return (over_15, over_25, under_25, under_35)
     
