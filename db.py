@@ -189,7 +189,19 @@ class Database (MySQL):
                 # Validate data
                 if not (over_15 and over_25 and under_25 and under_35 \
                     and dc_x1 and dc_12 and dc_x2 and aa and na):
-                    logger.error (f"(details) Can't save odds match {id_web}")
+                    logger.error (f"(details) Odds not found {id_web}")
+                    
+                    # Delete match from matches_groups
+                    pos_match = matches_data.index (match_data)
+                    del matches_data[pos_match]
+                    del match_group["matches_indexes"][pos_match]
+                    
+                    # Delete from db
+                    query = f"DELETE FROM {DB_TABLE} WHERE id_web = '{id_web}'"
+                    self.run_sql (query)
+                    
+                    logger.info (f"(basic) Match {id_web} deleted (quotes not found)")
+                                        
                     continue
                 
                 # Insert new match
