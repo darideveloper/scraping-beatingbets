@@ -8,7 +8,7 @@ class ScraperDetails (Scraper):
     def __init__ (self):
         
         # Start scraper
-        print ("\nOpening chrome for details scraper...")
+        print ("\n* Opening chrome for details scraper...\n")
         super().__init__()
         
         # Details page links
@@ -114,7 +114,7 @@ class ScraperDetails (Scraper):
                 THREADS_STATUS["details"] = "ended"
                 break
         
-            logger.info ("\n(details) Scraping odds...")
+            logger.info ("* (details) Scraping odds...")
             
             # Loop groups
             for match_group in Scraper.matches_groups:
@@ -134,7 +134,7 @@ class ScraperDetails (Scraper):
                     match_data = list(filter(lambda match: match["id"] == match_id, matches_data))[0]
                     team1 = match_data["home_team"]
                     team2 = match_data["away_team"]
-                    logger.info (f"\t(details) Scraping for {team1} - {team2}...")
+                    logger.info (f"(details) Scraping for {team1} - {team2}...")
                                         
                     # get details url
                     self.click_js (selector_details_btn)
@@ -162,7 +162,7 @@ class ScraperDetails (Scraper):
                         dc_x1, dc_12, dc_x2 = self.__get_double_chance__()
                         aa, na = self.__get_both_teams_to_score__()
                     except:
-                        logger.error (f"\t(details) ERROR: Odds not found in match: '{current_url}', skipped")
+                        logger.error (f"(details) ERROR: Odds not found in match: '{current_url}', skipped")
                     
                     # Return to home page
                     self.close_tab ()
@@ -180,7 +180,7 @@ class ScraperDetails (Scraper):
                     match_data["na"] = na
             
             # Save data in db
-            logger.info ("\t(details) Saving in db...")
+            logger.info ("(details) Saving in db...")
             self.db.save_details_odds (Scraper.matches_groups)
             
             # refresh

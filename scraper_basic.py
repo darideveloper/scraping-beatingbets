@@ -7,13 +7,13 @@ class ScraperBasic (Scraper):
     def __init__ (self):
         
         # Start scraper
-        print ("\nOpening chrome for basic scraper...")
+        print ("\n* Opening chrome for basic scraper...\n")
         super().__init__()
     
     def scrape_basic_general (self):
         """ Scrape general data (teams and ids), and save in db """
         
-        logger.info ("\n(basic) Scraping teams and ids...")
+        logger.info ("* (basic) Scraping teams and ids...")
         
         # Loop each match group
         for match_group in Scraper.matches_groups:
@@ -49,7 +49,7 @@ class ScraperBasic (Scraper):
                 })
                 
         # Save data in db 
-        logger.info ("\t(basic) Saving in db...")
+        logger.info ("(basic) Saving in db...")
         self.db.save_basic_general (Scraper.matches_groups)            
     
     def scrape_basic_oods (self):
@@ -66,7 +66,7 @@ class ScraperBasic (Scraper):
                 THREADS_STATUS["basic"] = "ended"
                 break
         
-            logger.info ("\n(basic) Scraping odds...")
+            logger.info ("* (basic) Scraping odds...")
             
             # Loop each match group
             for match_group in Scraper.matches_groups:
@@ -112,7 +112,7 @@ class ScraperBasic (Scraper):
                     match_group["matches_data"][index]["score"] = score
             
             # Save data in db
-            logger.info ("\t(basic) Saving in db...")
+            logger.info ("(basic) Saving in db...")
             self.db.save_basic_odds (Scraper.matches_groups)
             
             # refresh

@@ -215,7 +215,7 @@ class Scraper (WebScraping):
     def load_matches (self):
         """ Load matches and save country-ligue relation """
         
-        logger.info ("\nReading matches...")
+        logger.info ("\n* Reading matches...\n")
         
         # Loop each row for detect headers and matches
         current_match_group = {}

@@ -30,8 +30,8 @@ if __name__ == "__main__":
         sleep (2)
         
         # Scraper basic odds in thread
-        # thread_basic_odds = Thread(target=scraper_basic.scrape_basic_oods)
-        # thread_basic_odds.start()
+        thread_basic_odds = Thread(target=scraper_basic.scrape_basic_oods)
+        thread_basic_odds.start()
         
         # Scraper details odds in thread
         thread_details_odds = Thread(target=scraper_details.scrape_details_oods)
@@ -39,10 +39,11 @@ if __name__ == "__main__":
         
         # End threads after reopen time
         sleep (MINUTES_REOPEN * 60)
-        logger.info ("\nRestarting scraper...")
-        # THREADS_STATUS["basic"] = "ending"
-        # THREADS_STATUS["details"] = "ending"
+        logger.info ("\nRestarting scraper...\n")
+        THREADS_STATUS["basic"] = "ending"
+        THREADS_STATUS["details"] = "ending"
         
-        # # Wait until threads end
-        # thread_basic_odds.join()
-        # print ()
+        # Wait until threads end
+        thread_basic_odds.join ()
+        thread_details_odds.join ()
+        print ()

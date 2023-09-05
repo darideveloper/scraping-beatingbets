@@ -79,7 +79,7 @@ class Database (MySQL):
                 
                 # Validate data
                 if not (id_web and team1 and team2):
-                    logger.error (f"\t(basic) Can't save general match {id_web}")
+                    logger.error (f"(basic) Can't save general match {id_web}")
                     continue
                 
                 # Clean data
@@ -97,9 +97,9 @@ class Database (MySQL):
                 new_matches_saved += 1
         
         if new_matches_saved:
-            logger.info (f"\t(basic) {new_matches_saved} new matches saved in basic general")
+            logger.info (f"(basic) {new_matches_saved} new matches saved in basic general")
         else: 
-            logger.info ("\t(basic) No new matches saved in general")
+            logger.info ("(basic) No new matches saved in general")
             
     def save_basic_odds (self, matches_groups:list):
         
@@ -125,7 +125,7 @@ class Database (MySQL):
                 
                 # Validate data
                 if not (id_web and time and c1 and c2 and c3):
-                    logger.error (f"\t(basic) Can't save odds match {id_web}")
+                    logger.error (f"(basic) Can't save odds match {id_web}")
                     continue
                 
                 # Insert new match
@@ -142,7 +142,7 @@ class Database (MySQL):
                 
                 matches_updated += 1
         
-        logger.info (f"\t(basic) {matches_updated} matches updated in odds")
+        logger.info (f"(basic) {matches_updated} matches updated in odds")
         
     def save_details_odds (self, matches_groups:list): 
         
@@ -173,7 +173,7 @@ class Database (MySQL):
                 # Validate data
                 if not (over_15 and over_25 and under_25 and under_35 \
                     and dc_x1 and dc_12 and dc_x2 and aa and na):
-                    logger.error (f"\t(details) Can't save odds match {id_web}")
+                    logger.error (f"(details) Can't save odds match {id_web}")
                     continue
                 
                 # Insert new match
@@ -194,4 +194,4 @@ class Database (MySQL):
                 
                 matches_updated += 1
         
-        logger.info (f"\t(details) {matches_updated} matches updated")
+        logger.info (f"(details) {matches_updated} matches updated")
