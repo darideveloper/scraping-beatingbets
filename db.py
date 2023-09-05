@@ -143,3 +143,55 @@ class Database (MySQL):
                 matches_updated += 1
         
         logger.info (f"\t(basic) {matches_updated} matches updated in odds")
+        
+    def save_details_odds (self, matches_groups:list): 
+        
+          # Loop groups
+        matches_updated = 0
+        for match_group in matches_groups:
+  
+            matches_data = match_group["matches_data"]
+            
+            # Only update existing matches
+            saved_ids = self.__get_saved_ids__ (matches_data)
+            matches_to_save = list(filter (lambda match: match["id"] in saved_ids, matches_data))
+            
+            # Loop match
+            for match_data in matches_to_save:
+                
+                id_web = match_data.get("id", "")
+                over_15 = match_data.get("over_15", "")
+                over_25 = match_data.get("over_25", "")
+                under_25 = match_data.get("under_25", "")
+                under_35 = match_data.get("under_35", "")
+                dc_x1 = match_data.get("dc_x1", "")
+                dc_12 = match_data.get("dc_12", "")
+                dc_x2 = match_data.get("dc_x2", "")
+                aa = match_data.get("aa", "")
+                na = match_data.get("na", "")
+                
+                # Validate data
+                if not (over_15 and over_25 and under_25 and under_35 \
+                    and dc_x1 and dc_12 and dc_x2 and aa and na):
+                    logger.error (f"\t(details) Can't save odds match {id_web}")
+                    continue
+                
+                # Insert new match
+                query = f""" Update {DB_TABLE} 
+                    SET 
+                        over15 = '{over_15}',
+                        over25 = '{over_25}',
+                        under25 = '{under_25}',
+                        under35 = '{under_35}',
+                        locemp = '{dc_x1}',
+                        locvis = '{dc_12}',
+                        empvis = '{dc_x2}',
+                        ambos = '{aa}',
+                        noambos = '{na}'
+                    WHERE id_web = '{id_web}'
+                """
+                self.run_sql (query)
+                
+                matches_updated += 1
+        
+        logger.info (f"\t(details) {matches_updated} matches updated")
