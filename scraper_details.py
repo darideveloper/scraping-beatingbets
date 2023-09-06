@@ -134,6 +134,10 @@ class ScraperDetails (Scraper):
                 # Loop matches
                 for index in matches_indexes: 
                     
+                    # Force kill thread
+                    if THREADS_STATUS["basic"] == "kill":
+                        quit ()
+                    
                     # Selectors 
                     selector_row = f"{self.selectors['row']}:nth-child({index})"
                     selector_details_btn = f"{selector_row} {self.selectors['team_home']}"
@@ -187,6 +191,10 @@ class ScraperDetails (Scraper):
                     match_data["dc_x2"] = dc_x2
                     match_data["aa"] = aa
                     match_data["na"] = na
+                    
+                    # Force kill thread
+                    if THREADS_STATUS["basic"] == "kill":
+                        quit ()
             
             # Save data in db
             logger.info ("(details) Saving in db...")

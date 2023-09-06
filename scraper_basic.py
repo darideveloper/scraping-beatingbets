@@ -81,6 +81,10 @@ class ScraperBasic (Scraper):
             # Loop each match group
             for match_group in Scraper.matches_groups:
                 
+                # Force kill thread
+                if THREADS_STATUS["basic"] == "kill":
+                    quit ()
+                
                 # Get indexes
                 page_indexes = match_group["matches_indexes"]
                 
@@ -126,6 +130,10 @@ class ScraperBasic (Scraper):
                     match_group["matches_data"][index]["c2"] = c2s[index]
                     match_group["matches_data"][index]["c3"] = c3s[index]
                     match_group["matches_data"][index]["score"] = score
+                    
+                # Force kill thread
+                if THREADS_STATUS["basic"] == "kill":
+                    quit ()
             
             # Save data in db
             logger.info ("(basic) Saving in db...")
