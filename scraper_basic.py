@@ -1,6 +1,12 @@
+import os
+from time import sleep 
 from logs import logger
 from scraper import Scraper
 from scraper import THREADS_STATUS
+from dotenv import load_dotenv
+
+load_dotenv () 
+WAIT_TIME_BASIC = int(os.getenv("WAIT_TIME_BASIC"))
 
 class ScraperBasic (Scraper): 
     
@@ -124,6 +130,9 @@ class ScraperBasic (Scraper):
             # Save data in db
             logger.info ("(basic) Saving in db...")
             self.db.save_basic_odds (Scraper.matches_groups)
+            
+            # Wait before next scrape
+            sleep (WAIT_TIME_BASIC*60)
             
             # refresh
             self.refresh_selenium ()    
