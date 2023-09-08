@@ -192,9 +192,9 @@ class Database (MySQL):
                     logger.error (f"(details) Odds not found {id_web}")
                     
                     # Delete match from matches_groups
-                    pos_match = matches_data.index (match_data)
-                    del matches_data[pos_match]
-                    del match_group["matches_indexes"][pos_match]
+                    index = match_data["index"]
+                    match_group["matches_data"].remove (match_data)
+                    match_group["matches_indexes"].remove (index)
                     
                     # Delete from db
                     query = f"DELETE FROM {DB_TABLE} WHERE id_web = '{id_web}'"

@@ -144,7 +144,10 @@ class ScraperDetails (Scraper):
                     
                     # Get current match data
                     match_id = self.get_attrib (selector_row, "id")
-                    match_data = list(filter(lambda match: match["id"] == match_id, matches_data))[0]
+                    match_data = list(filter(lambda match: match["id"] == match_id, matches_data))
+                    if len(match_data) == 0:
+                        continue
+                    match_data = match_data[0]
                     team1 = match_data["home_team"]
                     team2 = match_data["away_team"]
                     logger.info (f"(details) Scraping for {team1} - {team2}...")

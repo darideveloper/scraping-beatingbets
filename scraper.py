@@ -24,17 +24,21 @@ class Scraper (WebScraping):
     # Scraping data
     matches_groups = []
     """ Structure of matches_groups:
-    {
-        "country": str,
-        "league": str,
-        "matches_data": [{
-            "home_team": str, 
-            "away_team": str,
-            "id": str,
-            "index": int,
-        }],
-        "matches_indexes": [int],
-    }
+    [
+        {
+            "country": str,
+            "league": str,
+            "matches_data": [
+                {
+                    "home_team": str, 
+                    "away_team": str,
+                    "index": int,
+                    "id": str
+                }
+            ],
+            "matches_indexes": [int],
+        }
+    ]
     """
     
     def __init__(self):

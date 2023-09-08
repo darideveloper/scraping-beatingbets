@@ -10,6 +10,9 @@ WAIT_TIME_BASIC = int(os.getenv("WAIT_TIME_BASIC"))
 
 class ScraperBasic (Scraper): 
     
+    # DEBUG
+    original_matches_groups = []
+    
     def __init__ (self):
         
         # Start scraper
@@ -36,7 +39,8 @@ class ScraperBasic (Scraper):
             # Validate if there are missing matches
             if len(match_group["matches_data"]) == len(page_indexes):
                 continue
-            # Delete matches_data (if exists)
+            
+            # Delete old matches_data (if exists)
             elif len(match_group["matches_data"]) < len(page_indexes):
                 match_group["matches_data"] = []
             
@@ -60,6 +64,7 @@ class ScraperBasic (Scraper):
                 
         # Save data in db 
         logger.info ("(basic) Saving in db...")
+        ScraperBasic.original_matches_groups = Scraper.matches_groups
         self.db.save_basic_general (Scraper.matches_groups)            
     
     def scrape_basic_oods (self):
@@ -103,18 +108,16 @@ class ScraperBasic (Scraper):
                 selector_score_home = f"{selector_matches} {self.selectors['score_home']}"
                 selector_score_away = f"{selector_matches} {self.selectors['score_away']}"
                 
+                ids = self.get_attribs (selector_matches, "id")
                 times = self.get_texts (selector_time)
                 c1s = self.get_texts (selector_c1)
                 c2s = self.get_texts (selector_c2)
                 c3s = self.get_texts (selector_c3)
                 scores_home = self.get_texts (selector_score_home)
                 scores_away = self.get_texts (selector_score_away)
-                
-                for index, time in enumerate (times):
-                    
-                    # Validate if matches_data already have info
-                    if len(match_group["matches_data"]) <= index:
-                        continue
+       
+                # Format and save each match data
+                for index, id in enumerate (ids):
                     
                     # Format score
                     score_home = scores_home[index]
@@ -123,14 +126,20 @@ class ScraperBasic (Scraper):
                         score = f"{score_home} - {score_away}"
                     else: 
                         score = "none"
+                
+                    # Get current match by id
+                    match_data = list(filter(lambda match: match["id"] == id, match_group["matches_data"]))
+                    if len(match_data) == 0:
+                        continue
+                    match_data = match_data[0]
                     
-                    # update data in row
-                    match_group["matches_data"][index]["time"] = time
-                    match_group["matches_data"][index]["c1"] = c1s[index]
-                    match_group["matches_data"][index]["c2"] = c2s[index]
-                    match_group["matches_data"][index]["c3"] = c3s[index]
-                    match_group["matches_data"][index]["score"] = score
-                    
+                    # Update match data
+                    match_data["time"] = times[index]
+                    match_data["c1"] = c1s[index]
+                    match_data["c2"] = c2s[index]
+                    match_data["c3"] = c3s[index]
+                    match_data["score"] = score
+                
                 # Force kill thread
                 if THREADS_STATUS["basic"] == "kill":
                     quit ()
