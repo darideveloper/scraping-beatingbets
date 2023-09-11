@@ -74,6 +74,18 @@ class ScraperBasic (Scraper):
         global THREADS_STATUS
         THREADS_STATUS["basic"] = "running"
         
+        # Change "preview" scores to "-"
+        script = """
+            const svgs = document.querySelectorAll ('.preview-ico.icon--preview')
+            svgs.forEach (svg => {
+                const parent = svg.parentElement
+                parent.removeChild (svg)
+                parent.innerHTML += '<div class="event__score event__score--home">-</div>'
+                parent.innerHTML += '<div class="event__score event__score--away">-</div>'
+            })
+        """
+        self.driver.execute_script (script)
+        
         while True:
             
             # End if status is ending and details already end
