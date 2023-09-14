@@ -121,6 +121,7 @@ class ScraperBasic (Scraper):
                 selector_score_away = f"{selector_matches} {self.selectors['score_away']}"
                 
                 ids = self.get_attribs (selector_matches, "id")
+                
                 times = self.get_texts (selector_time)
                 c1s = self.get_texts (selector_c1)
                 c2s = self.get_texts (selector_c2)
@@ -128,6 +129,9 @@ class ScraperBasic (Scraper):
                 scores_home = self.get_texts (selector_score_home)
                 scores_away = self.get_texts (selector_score_away)
        
+                # Clean ids
+                ids = list(filter(lambda id: id != "", ids))
+                
                 # Format and save each match data
                 for index, id in enumerate (ids):
                     
