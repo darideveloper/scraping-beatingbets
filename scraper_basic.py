@@ -88,87 +88,100 @@ class ScraperBasic (Scraper):
         
         while True:
             
-            # End if status is ending and details already end
-            if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "ended":
-                THREADS_STATUS["basic"] = "ended"
-                break
-        
-            logger.info ("* (basic) Scraping odds...")
+            try:
+                
+                # End if status is ending and details already end
+                if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "ended":
+                    THREADS_STATUS["basic"] = "ended"
+                    break
             
-            # Loop each match group
-            for match_group in Scraper.matches_groups:
+                logger.info ("* (basic) Scraping odds...")
                 
-                # Force kill thread
-                if THREADS_STATUS["basic"] == "kill":
-                    quit ()
-                
-                # Get indexes
-                page_indexes = match_group["matches_indexes"]
-                
-                if not page_indexes:
-                    continue
-                
-                first_index = page_indexes[0]
-                last_index = page_indexes[-1]
-                
-                # Get all matches data
-                selector_matches = f"{self.selectors['row']}:nth-child(n+{first_index}):nth-child(-n+{last_index})"
-                selector_time = f"{selector_matches} {self.selectors['time']}"
-                selector_c1 = f"{selector_matches} {self.selectors['c1']}"
-                selector_c2 = f"{selector_matches} {self.selectors['c2']}"
-                selector_c3 = f"{selector_matches} {self.selectors['c3']}"
-                selector_score_home = f"{selector_matches} {self.selectors['score_home']}"
-                selector_score_away = f"{selector_matches} {self.selectors['score_away']}"
-                
-                ids = self.get_attribs (selector_matches, "id")
-                
-                times = self.get_texts (selector_time)
-                c1s = self.get_texts (selector_c1)
-                c2s = self.get_texts (selector_c2)
-                c3s = self.get_texts (selector_c3)
-                scores_home = self.get_texts (selector_score_home)
-                scores_away = self.get_texts (selector_score_away)
-       
-                # Clean ids
-                ids = list(filter(lambda id: id != "", ids))
-                
-                # Format and save each match data
-                for index, id in enumerate (ids):
+                # Loop each match group
+                for match_group in Scraper.matches_groups:
                     
-                    # Format score
-                    score_home = scores_home[index]
-                    score_away = scores_away[index]
-                    if score_home != "-" and score_away != "-":
-                        score = f"{score_home} - {score_away}"
-                    else: 
-                        score = "none"
-                
-                    # Get current match by id
-                    match_data = list(filter(lambda match: match["id"] == id, match_group["matches_data"]))
-                    if len(match_data) == 0:
+                    # Force kill thread
+                    if THREADS_STATUS["basic"] == "kill":
+                        quit ()
+                    
+                    # Get indexes
+                    page_indexes = match_group["matches_indexes"]
+                    
+                    if not page_indexes:
                         continue
-                    match_data = match_data[0]
                     
-                    # Update match data
-                    match_data["time"] = times[index]
-                    match_data["c1"] = c1s[index]
-                    match_data["c2"] = c2s[index]
-                    match_data["c3"] = c3s[index]
-                    match_data["score"] = score
+                    first_index = page_indexes[0]
+                    last_index = page_indexes[-1]
+                    
+                    # Get all matches data
+                    selector_matches = f"{self.selectors['row']}:nth-child(n+{first_index}):nth-child(-n+{last_index})"
+                    selector_time = f"{selector_matches} {self.selectors['time']}"
+                    selector_c1 = f"{selector_matches} {self.selectors['c1']}"
+                    selector_c2 = f"{selector_matches} {self.selectors['c2']}"
+                    selector_c3 = f"{selector_matches} {self.selectors['c3']}"
+                    selector_score_home = f"{selector_matches} {self.selectors['score_home']}"
+                    selector_score_away = f"{selector_matches} {self.selectors['score_away']}"
+                    
+                    ids = self.get_attribs (selector_matches, "id")
+                    
+                    times = self.get_texts (selector_time)
+                    c1s = self.get_texts (selector_c1)
+                    c2s = self.get_texts (selector_c2)
+                    c3s = self.get_texts (selector_c3)
+                    scores_home = self.get_texts (selector_score_home)
+                    scores_away = self.get_texts (selector_score_away)
+        
+                    # Clean ids
+                    ids = list(filter(lambda id: id != "", ids))
+                    
+                    # Format and save each match data
+                    for index, id in enumerate (ids):
+                        
+                        # Format score
+                        score_home = scores_home[index]
+                        score_away = scores_away[index]
+                        if score_home != "-" and score_away != "-":
+                            score = f"{score_home} - {score_away}"
+                        else: 
+                            score = "none"
+                    
+                        # Get current match by id
+                        match_data = list(filter(lambda match: match["id"] == id, match_group["matches_data"]))
+                        if len(match_data) == 0:
+                            continue
+                        match_data = match_data[0]
+                        
+                        # Update match data
+                        match_data["time"] = times[index]
+                        match_data["c1"] = c1s[index]
+                        match_data["c2"] = c2s[index]
+                        match_data["c3"] = c3s[index]
+                        match_data["score"] = score
+                    
+                    # Force kill thread
+                    if THREADS_STATUS["basic"] == "kill":
+                        quit ()
                 
-                # Force kill thread
-                if THREADS_STATUS["basic"] == "kill":
-                    quit ()
-            
-            # Save data in db
-            logger.info ("(basic) Saving in db...")
-            self.db.save_basic_odds (Scraper.matches_groups)
-            
-            # Wait before next scrape
-            sleep (WAIT_TIME_BASIC*60)
-            
-            # refresh
-            self.refresh_selenium ()    
+                # Save data in db
+                logger.info ("(basic) Saving in db...")
+                self.db.save_basic_odds (Scraper.matches_groups)
+                
+                # Wait before next scrape
+                sleep (WAIT_TIME_BASIC*60)
+                
+                # refresh
+                self.refresh_selenium ()    
+            except Exception as e:
+                logger.error (f"(details) ERROR: connection error, restarting window... {e}")
+                
+                # Try to kill chrome
+                try:
+                    self.kill ()
+                except:
+                    pass
+                
+                # Restar class
+                self.__init__ ()                
             
         # Kill chrome instances when ends
         self.kill ()
