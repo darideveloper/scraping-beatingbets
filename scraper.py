@@ -17,6 +17,7 @@ CURRENT_PATH = os.path.dirname(__file__)
 THREADS_STATUS = {
     "basic": "idle", 
     "details": "idle",
+    "main": "idle"
 }
 
 class Scraper (WebScraping): 

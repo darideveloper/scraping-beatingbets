@@ -136,7 +136,7 @@ class ScraperDetails (Scraper):
                     for index in matches_indexes: 
                         
                         # Force kill thread
-                        if THREADS_STATUS["basic"] == "kill":
+                        if THREADS_STATUS["details"] == "kill":
                             quit ()
                         
                         # Selectors 
@@ -207,7 +207,8 @@ class ScraperDetails (Scraper):
                 # refresh
                 self.refresh_selenium ()    
             except Exception as e:
-                logger.error (f"(details) ERROR: connection error, restarting window... {e}")
+                logger.error (f"(details) ERROR: connection error, restarting window... ")
+                logger.debug (e)
                 
                 # Try to kill chrome
                 try:

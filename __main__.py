@@ -14,14 +14,15 @@ MINUTES_REOPEN = int(os.getenv("MINUTES_REOPEN"))
 
 THREAD_BASIC = None
 THREAD_DETAILS = None
-THREAD_MAIN_STATUS = "running"
 
 def main ():
     """ Start scraper with threads """
     
-    global THREAD_MAIN_STATUS
+    global THREADS_STATUS
     global THREAD_BASIC
     global THREAD_DETAILS
+    
+    THREADS_STATUS["main"] = "running"
     
     while True:
         
@@ -35,15 +36,17 @@ def main ():
         scraper_details = ScraperDetails()
         
         # Kill thread
-        if THREAD_MAIN_STATUS == "kill":
+        if THREADS_STATUS["main"] == "kill":
             quit ()
         
         # Scrape general data only one time
-        scraper_basic.scrape_basic_general ()
+        is_done = scraper_basic.scrape_basic_general ()
+        if not is_done:
+            continue
         sleep (2)
         
         # Kill thread
-        if THREAD_MAIN_STATUS == "kill":
+        if THREADS_STATUS["main"] == "kill":
             quit ()
         
         # Scraper basic odds in thread
@@ -51,7 +54,7 @@ def main ():
         THREAD_BASIC.start()
         
         # Kill thread
-        if THREAD_MAIN_STATUS == "kill":
+        if THREADS_STATUS["main"] == "kill":
             quit ()
         
         # Scraper details odds in thread
@@ -59,19 +62,29 @@ def main ():
         THREAD_DETAILS.start ()
         
         # Kill thread
-        if THREAD_MAIN_STATUS == "kill":
+        if THREADS_STATUS["main"] == "kill":
             quit ()
         
         # End threads after reopen time
-        
+        restarted = False
         for _ in range (MINUTES_REOPEN*60):
-            if THREAD_MAIN_STATUS == "kill":
+            
+            # Detect killed by user
+            if THREADS_STATUS["main"] == "kill":
                 quit ()
+            
+            # Detect restart from threads
+            if THREADS_STATUS["main"] == "restart":
+                restarted = True
+                break
+            
             sleep (1)
         
-        logger.info ("\nRestarting scraper...\n")
-        THREADS_STATUS["basic"] = "ending"
-        THREADS_STATUS["details"] = "ending"
+        # Regular rnd thread after time
+        if not restarted:
+            logger.info ("\nRestarting scraper...\n")
+            THREADS_STATUS["basic"] = "ending"
+            THREADS_STATUS["details"] = "ending"
         
         # Wait until threads end
         THREAD_BASIC.join ()
@@ -89,7 +102,7 @@ if __name__ == "__main__":
     if user_input.lower().strip() == "q":
         THREADS_STATUS["basic"] = "kill"
         THREADS_STATUS["details"] = "kill"
-        THREAD_MAIN_STATUS = "kill"
+        THREADS_STATUS["main"] = "kill"
         print ("\nStopping scraper, wait a moment...\n")
         
         # Join threads

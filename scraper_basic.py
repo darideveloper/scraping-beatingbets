@@ -19,12 +19,17 @@ class ScraperBasic (Scraper):
         print ("\n* Opening chrome for basic scraper...\n")
         super().__init__()
     
-    def scrape_basic_general (self):
-        """ Scrape general data (teams and ids), and save in db """
+    def scrape_basic_general (self) -> bool:
+        """ Scrape general data (teams and ids), and save in db 
+        
+        Returns
+            bool: True if success, False if error
+        """
         
         logger.info ("* (basic) Scraping teams and ids...")
         
         # Loop each match group
+        save_data = True
         for match_group in Scraper.matches_groups:
             
             # Indexes
@@ -50,8 +55,20 @@ class ScraperBasic (Scraper):
             selector_away_teams = f"{selector_matches} {self.selectors['team_away']}"
             
             ids = self.get_attribs (selector_matches, "id")
+            
+            # Clean ids
+            ids = list(filter(lambda id: id != "", ids))
+            
             home_teams = self.get_texts (selector_home_teams)
             away_teams = self.get_texts (selector_away_teams)
+            
+            # Validate data integrity
+            if len(ids) != len(home_teams) or len(ids) != len(away_teams):
+                logger.error ("(basic) ERROR: data integrity error. Restarting...")
+                logger.debug (f"ids: {len(ids)}, home_teams: {len(home_teams)}, away_teams: {len(away_teams)}")
+                
+                # Return status
+                return False   
             
             # Format and save data
             for index, id in enumerate (ids):               
@@ -61,11 +78,13 @@ class ScraperBasic (Scraper):
                     "id": id,
                     "index": page_indexes[index],
                 })
-                
+        
         # Save data in db 
         logger.info ("(basic) Saving in db...")
         ScraperBasic.original_matches_groups = Scraper.matches_groups
-        self.db.save_basic_general (Scraper.matches_groups)            
+        self.db.save_basic_general (Scraper.matches_groups)     
+        
+        return True       
     
     def scrape_basic_oods (self):
         """ Scraper odds data (time, c1, c2, c3), in loop """
@@ -87,6 +106,8 @@ class ScraperBasic (Scraper):
         self.driver.execute_script (script)
         
         while True:
+            
+            save_data = True
             
             try:
                 
@@ -124,15 +145,30 @@ class ScraperBasic (Scraper):
                     
                     ids = self.get_attribs (selector_matches, "id")
                     
+                    # Clean ids
+                    ids = list(filter(lambda id: id != "", ids))
+                    
                     times = self.get_texts (selector_time)
                     c1s = self.get_texts (selector_c1)
                     c2s = self.get_texts (selector_c2)
                     c3s = self.get_texts (selector_c3)
                     scores_home = self.get_texts (selector_score_home)
                     scores_away = self.get_texts (selector_score_away)
-        
-                    # Clean ids
-                    ids = list(filter(lambda id: id != "", ids))
+                    
+                    # Validate data integrity
+                    if len(ids) != len(times) or len(ids) != len(c1s) or len(ids) != len(c2s) or len(ids) != len(c3s):
+                        logger.error ("(basic) ERROR: data integrity error. Restarting...")
+                        logger.debug (f"ids: {len(ids)}, times: {len(times)}, c1s: {len(c1s)}, c2s: {len(c2s)}, c3s: {len(c3s)}")
+                        
+                        # Force kill threads
+                        THREADS_STATUS["basic"] = "kill"
+                        THREADS_STATUS["details"] = "kill"
+                        THREADS_STATUS["main"] = "restart"
+                        
+                        # No save in db
+                        save_data = False
+                        
+                        break
                     
                     # Format and save each match data
                     for index, id in enumerate (ids):
@@ -162,6 +198,9 @@ class ScraperBasic (Scraper):
                     if THREADS_STATUS["basic"] == "kill":
                         quit ()
                 
+                if not save_data:
+                    continue
+                
                 # Save data in db
                 logger.info ("(basic) Saving in db...")
                 self.db.save_basic_odds (Scraper.matches_groups)
@@ -172,7 +211,8 @@ class ScraperBasic (Scraper):
                 # refresh
                 self.refresh_selenium ()    
             except Exception as e:
-                logger.error (f"(details) ERROR: connection error, restarting window... {e}")
+                logger.error (f"(basic) ERROR: connection error, restarting window... ")
+                logger.debug (e)
                 
                 # Try to kill chrome
                 try:
