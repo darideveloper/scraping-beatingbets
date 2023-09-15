@@ -90,6 +90,9 @@ def main ():
         THREAD_BASIC.join ()
         THREAD_DETAILS.join ()
         print ()    
+        
+        # Kill all chrome process for windows
+        os.system("taskkill /f /im chrome.exe")
     
 if __name__ == "__main__":
     
