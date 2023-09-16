@@ -26,44 +26,51 @@ def main ():
     
     while True:
         
-        # Load matches
-        scraper = Scraper()
-        scraper.load_matches ()
-        scraper.kill ()
+        try:
         
-        # Instance browsers
-        scraper_basic = ScraperBasic()
-        scraper_details = ScraperDetails()
+            # Load matches
+            scraper = Scraper()
+            scraper.load_matches ()
+            scraper.kill ()
+            
+            # Instance browsers
+            scraper_basic = ScraperBasic()
+            scraper_details = ScraperDetails()
+            
+            # Kill thread
+            if THREADS_STATUS["main"] == "kill":
+                quit ()
+            
+            # Scrape general data only one time
+            is_done = scraper_basic.scrape_basic_general ()
+            if not is_done:
+                continue
+            sleep (2)
+            
+            # Kill thread
+            if THREADS_STATUS["main"] == "kill":
+                quit ()
+            
+            # Scraper basic odds in thread
+            THREAD_BASIC = Thread(target=scraper_basic.scrape_basic_oods)
+            THREAD_BASIC.start()
+            
+            # Kill thread
+            if THREADS_STATUS["main"] == "kill":
+                quit ()
+            
+            # Scraper details odds in thread
+            THREAD_DETAILS = Thread(target=scraper_details.scrape_details_oods)
+            THREAD_DETAILS.start ()
+            
+            # Kill thread
+            if THREADS_STATUS["main"] == "kill":
+                quit ()
         
-        # Kill thread
-        if THREADS_STATUS["main"] == "kill":
-            quit ()
-        
-        # Scrape general data only one time
-        is_done = scraper_basic.scrape_basic_general ()
-        if not is_done:
-            continue
-        sleep (2)
-        
-        # Kill thread
-        if THREADS_STATUS["main"] == "kill":
-            quit ()
-        
-        # Scraper basic odds in thread
-        THREAD_BASIC = Thread(target=scraper_basic.scrape_basic_oods)
-        THREAD_BASIC.start()
-        
-        # Kill thread
-        if THREADS_STATUS["main"] == "kill":
-            quit ()
-        
-        # Scraper details odds in thread
-        THREAD_DETAILS = Thread(target=scraper_details.scrape_details_oods)
-        THREAD_DETAILS.start ()
-        
-        # Kill thread
-        if THREADS_STATUS["main"] == "kill":
-            quit ()
+        except Exception as e:
+            logger.error (f"Error starting scraper. Restarting scraper...")
+            logger.debug (e)
+            continue    
         
         # End threads after reopen time
         restarted = False
