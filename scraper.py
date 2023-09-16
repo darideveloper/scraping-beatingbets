@@ -169,7 +169,7 @@ class Scraper (WebScraping):
         """ Open browser instance and load page """
             
         # Load page
-        super().__init__(headless=HEADLESS)
+        super().__init__(headless=HEADLESS, time_out=500)
         self.set_page (self.page)
   
     def __accept_cookies__ (self):
