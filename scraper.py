@@ -66,6 +66,7 @@ class Scraper (WebScraping):
                 "c3": 'div.event__odd--odd3',
                 "score_home": '.event__score.event__score--home',
                 "score_away": '.event__score.event__score--away',
+                "score_preview": '.preview-ico.icon--preview',
                 "over_under": {
                     "bookmarker": ".oddsTab__tableWrapper .ui-table.oddsCell__odds",
                     "base": ".ui-table__row",
@@ -245,6 +246,11 @@ class Scraper (WebScraping):
                 
                 # Get data
                 texts = self.get_texts (selector)
+                
+                # Fix score
+                if "score" in item and "" in texts: 
+                    # Replace all empty scores with "-"
+                    texts = list(map(lambda text: text if text != "" else "-", texts))
                 
                 # Save data
                 data[item] = texts    

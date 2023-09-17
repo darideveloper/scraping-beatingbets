@@ -84,16 +84,6 @@ class ScraperBasic (Scraper):
     def scrape_basic_oods (self):
         """ Scraper odds data (time, c1, c2, c3), in loop """
         
-        script = """
-            const svgs = document.querySelectorAll ('.preview-ico.icon--preview')
-            svgs.forEach (svg => {
-                const parent = svg.parentElement
-                parent.removeChild (svg)
-                parent.innerHTML += '<div class="event__score event__score--home">-</div>'
-                parent.innerHTML += '<div class="event__score event__score--away">-</div>'
-            })
-        """
-        
         # Update global status
         global THREADS_STATUS
         THREADS_STATUS["basic"] = "running"
@@ -102,9 +92,6 @@ class ScraperBasic (Scraper):
         while running:
                         
             try:
-                
-                # Refresh page
-                self.driver.execute_script (script)
                 
                 # End if status is ending and details already end
                 if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "ended":
@@ -137,8 +124,8 @@ class ScraperBasic (Scraper):
                     selector_c1 = f"{selector_matches} {self.selectors['c1']}"
                     selector_c2 = f"{selector_matches} {self.selectors['c2']}"
                     selector_c3 = f"{selector_matches} {self.selectors['c3']}"
-                    selector_score_home = f"{selector_matches} {self.selectors['score_home']}"
-                    selector_score_away = f"{selector_matches} {self.selectors['score_away']}"
+                    selector_score_home = f"{selector_matches} {self.selectors['score_home']}, {selector_matches} {self.selectors['score_preview']}"
+                    selector_score_away = f"{selector_matches} {self.selectors['score_away']}, {selector_matches} {self.selectors['score_preview']}"
                     
                     ids = self.get_attribs (selector_matches, "id")
                     
