@@ -216,6 +216,59 @@ class Scraper (WebScraping):
             self.translate_status = json_data["status"]
             self.translate_countries = json_data["countries"]
             self.translate_leagues = json_data["leagues"]
+            
+    def __extract_data_loop__ (self, selectors:dict) -> dict:
+        """ Try multiple times to extract data in loop, and validate integrity 
+        
+        Args:
+            selectors (dict): Dictionary with selectors
+            {
+                "elem key": "selector",
+                ...
+            }
+        
+        Returns:
+            dict: Dictionary with data
+            
+            {
+                "elem key": ["value1", "value2", ...],
+            }
+        """
+        
+        for _ in range (3):
+            
+            data = {}
+        
+            lengths = []         
+            for item, selectors in selectors.items():
+                
+                # Get data
+                texts = self.get_texts (selectors)
+                
+                # Save data
+                data[item] = texts    
+                lengths.append (len(texts))
+                
+            # Validate data integrit (all registers must have same length)
+            avg = sum(lengths) / len(lengths)
+            if all (length == avg for length in lengths) and avg > 0:
+                return data
+            else:
+                sleep (3)
+                continue
+        
+        # Logs error
+        logger.error ("(basic) ERROR: data integrity error. Restarting...")
+        logger.debug (f"lengths: {lengths}")
+        logger.debug (f"data: {data}")
+        
+        # Restart scraper
+        THREADS_STATUS["basic"] = "kill"
+        THREADS_STATUS["details"] = "kill"
+        THREADS_STATUS["main"] = "restart"
+        
+        return {}
+            
     
     def load_matches (self):
         """ Load matches and save country-ligue relation """

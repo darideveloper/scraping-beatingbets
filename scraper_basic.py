@@ -29,7 +29,6 @@ class ScraperBasic (Scraper):
         logger.info ("* (basic) Scraping teams and ids...")
         
         # Loop each match group
-        save_data = True
         for match_group in Scraper.matches_groups:
             
             # Indexes
@@ -54,27 +53,25 @@ class ScraperBasic (Scraper):
             selector_home_teams = f"{selector_matches} {self.selectors['team_home']}"
             selector_away_teams = f"{selector_matches} {self.selectors['team_away']}"
             
-            ids = self.get_attribs (selector_matches, "id")
             
-            # Clean ids
+            # Get and clean ids
+            ids = self.get_attribs (selector_matches, "id")
             ids = list(filter(lambda id: id != "", ids))
             
-            home_teams = self.get_texts (selector_home_teams)
-            away_teams = self.get_texts (selector_away_teams)
+            # Get data
+            data = self.__extract_data_loop__ ({
+                "home_teams": selector_home_teams,
+                "away_teams": selector_away_teams,
+            })
             
-            # Validate data integrity
-            if len(ids) != len(home_teams) or len(ids) != len(away_teams):
-                logger.error ("(basic) ERROR: data integrity error. Restarting...")
-                logger.debug (f"ids: {len(ids)}, home_teams: {len(home_teams)}, away_teams: {len(away_teams)}")
-                
-                # Return status
-                return False   
+            if not data:
+                break               
             
             # Format and save data
             for index, id in enumerate (ids):               
                 match_group["matches_data"].append ({
-                    "home_team": home_teams[index],
-                    "away_team": away_teams[index],
+                    "home_team": data["home_teams"][index],
+                    "away_team": data["away_teams"][index],
                     "id": id,
                     "index": page_indexes[index],
                 })
@@ -105,10 +102,9 @@ class ScraperBasic (Scraper):
         """
         self.driver.execute_script (script)
         
-        while True:
-            
-            save_data = True
-            
+        running = True
+        while running:
+                        
             try:
                 
                 # End if status is ending and details already end
@@ -148,34 +144,28 @@ class ScraperBasic (Scraper):
                     # Clean ids
                     ids = list(filter(lambda id: id != "", ids))
                     
-                    times = self.get_texts (selector_time)
-                    c1s = self.get_texts (selector_c1)
-                    c2s = self.get_texts (selector_c2)
-                    c3s = self.get_texts (selector_c3)
-                    scores_home = self.get_texts (selector_score_home)
-                    scores_away = self.get_texts (selector_score_away)
-                    
-                    # Validate data integrity
-                    if len(ids) != len(times) or len(ids) != len(c1s) or len(ids) != len(c2s) or len(ids) != len(c3s):
-                        logger.error ("(basic) ERROR: data integrity error. Restarting...")
-                        logger.debug (f"ids: {len(ids)}, times: {len(times)}, c1s: {len(c1s)}, c2s: {len(c2s)}, c3s: {len(c3s)}")
+                    # Try 3 times to get data
+                    data = self.__extract_data_loop__ ({
+                        "matches": selector_matches,
+                        "time": selector_time,
+                        "c1": selector_c1,
+                        "c2": selector_c2,
+                        "c3": selector_c3,
+                        "score_home": selector_score_home,
+                        "score_away": selector_score_away,
+                    })
                         
-                        # Force kill threads
-                        THREADS_STATUS["basic"] = "kill"
-                        THREADS_STATUS["details"] = "kill"
-                        THREADS_STATUS["main"] = "restart"
-                        
-                        # No save in db
-                        save_data = False
-                        
+                    # Catch no extracted data
+                    if not data:
+                        running = False
                         break
                     
                     # Format and save each match data
                     for index, id in enumerate (ids):
                         
                         # Format score
-                        score_home = scores_home[index]
-                        score_away = scores_away[index]
+                        score_home = data["score_home"][index]
+                        score_away = data["score_away"][index]
                         if score_home != "-" and score_away != "-":
                             score = f"{score_home} - {score_away}"
                         else: 
@@ -188,28 +178,26 @@ class ScraperBasic (Scraper):
                         match_data = match_data[0]
                         
                         # Update match data
-                        match_data["time"] = times[index]
-                        match_data["c1"] = c1s[index]
-                        match_data["c2"] = c2s[index]
-                        match_data["c3"] = c3s[index]
+                        match_data["time"] = data["time"][index]
+                        match_data["c1"] = data["c1"][index]
+                        match_data["c2"] = data["c2"][index]
+                        match_data["c3"] = data["c3"][index]
                         match_data["score"] = score
                     
                     # Force kill thread
                     if THREADS_STATUS["basic"] == "kill":
                         quit ()
                 
-                if not save_data:
-                    continue
-                
                 # Save data in db
-                logger.info ("(basic) Saving in db...")
-                self.db.save_basic_odds (Scraper.matches_groups)
-                
-                # Wait before next scrape
-                sleep (WAIT_TIME_BASIC*60)
-                
-                # refresh
-                self.refresh_selenium ()    
+                if running:
+                    logger.info ("(basic) Saving in db...")
+                    self.db.save_basic_odds (Scraper.matches_groups)
+                    
+                    # Wait before next scrape
+                    sleep (WAIT_TIME_BASIC*60)
+                    
+                    # refresh
+                    self.refresh_selenium ()    
             except Exception as e:
                 logger.error (f"(basic) ERROR: connection error, restarting window... ")
                 logger.debug (e)
