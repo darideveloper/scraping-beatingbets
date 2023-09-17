@@ -26,7 +26,7 @@ class ScraperBasic (Scraper):
             bool: True if success, False if error
         """
         
-        logger.info ("* (basic) Scraping teams and ids...")
+        logger.info ("(basic) Scraping teams and ids...")
         
         # Loop each match group
         for match_group in Scraper.matches_groups:
@@ -75,22 +75,15 @@ class ScraperBasic (Scraper):
                     "id": id,
                     "index": page_indexes[index],
                 })
-        
+                    
         # Save data in db 
-        logger.info ("(basic) Saving in db...")
-        ScraperBasic.original_matches_groups = Scraper.matches_groups
-        self.db.save_basic_general (Scraper.matches_groups)     
+        self.db.save_basic_general (Scraper.matches_groups) 
         
         return True       
     
     def scrape_basic_oods (self):
         """ Scraper odds data (time, c1, c2, c3), in loop """
         
-        # Update global status
-        global THREADS_STATUS
-        THREADS_STATUS["basic"] = "running"
-        
-        # Change "preview" scores to "-"
         script = """
             const svgs = document.querySelectorAll ('.preview-ico.icon--preview')
             svgs.forEach (svg => {
@@ -100,22 +93,30 @@ class ScraperBasic (Scraper):
                 parent.innerHTML += '<div class="event__score event__score--away">-</div>'
             })
         """
-        self.driver.execute_script (script)
+        
+        # Update global status
+        global THREADS_STATUS
+        THREADS_STATUS["basic"] = "running"
         
         running = True
         while running:
                         
             try:
                 
+                # Refresh page
+                self.driver.execute_script (script)
+                
                 # End if status is ending and details already end
                 if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "ended":
                     THREADS_STATUS["basic"] = "ended"
                     break
             
-                logger.info ("* (basic) Scraping odds...")
+                logger.info ("(basic) Scraping odds...")
                 
                 # Loop each match group
-                for match_group in Scraper.matches_groups:
+                for match_group_data in Scraper.matches_groups:
+                    
+                    match_group = match_group_data.copy ()
                     
                     # Force kill thread
                     if THREADS_STATUS["basic"] == "kill":
@@ -146,7 +147,6 @@ class ScraperBasic (Scraper):
                     
                     # Try 3 times to get data
                     data = self.__extract_data_loop__ ({
-                        "matches": selector_matches,
                         "time": selector_time,
                         "c1": selector_c1,
                         "c2": selector_c2,
@@ -188,16 +188,17 @@ class ScraperBasic (Scraper):
                     if THREADS_STATUS["basic"] == "kill":
                         quit ()
                 
-                # Save data in db
-                if running:
-                    logger.info ("(basic) Saving in db...")
-                    self.db.save_basic_odds (Scraper.matches_groups)
-                    
-                    # Wait before next scrape
-                    sleep (WAIT_TIME_BASIC*60)
-                    
-                    # refresh
-                    self.refresh_selenium ()    
+                    # Save data in db
+                    if running:
+                        self.db.save_basic_odds ([match_group])
+                        
+                        # Wait before next scrape
+                        sleep (WAIT_TIME_BASIC)
+                        
+                        # refresh
+                        self.refresh_selenium ()    
+                        
+                        
             except Exception as e:
                 logger.error (f"(basic) ERROR: connection error, restarting window... ")
                 logger.debug (e)

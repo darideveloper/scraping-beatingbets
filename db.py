@@ -21,6 +21,7 @@ class Database (MySQL):
     def __clean_string__ (self, string:str):
         
         replace_chars = {
+            "\\": "",
             "'": "\\'",
         }
         for char, replace in replace_chars.items():
@@ -97,9 +98,9 @@ class Database (MySQL):
                 new_matches_saved += 1
         
         if new_matches_saved:
-            logger.info (f"(basic) {new_matches_saved} new matches saved in basic general")
+            logger.info (f"* (basic) {new_matches_saved} new matches saved in basic general")
         else: 
-            logger.info ("(basic) No new matches saved in general")
+            logger.info ("* (basic) No new matches saved in general")
             
     def save_basic_odds (self, matches_groups:list):
         
@@ -158,7 +159,7 @@ class Database (MySQL):
                 
                 matches_updated += 1
         
-        logger.info (f"(basic) {matches_updated} matches updated in odds")
+        logger.info (f"* (basic) {matches_updated} matches updated in odds")
         
     def save_details_odds (self, matches_groups:list): 
         
@@ -222,4 +223,4 @@ class Database (MySQL):
                 
                 matches_updated += 1
         
-        logger.info (f"(details) {matches_updated} matches updated")
+        logger.info (f"* (details) {matches_updated} matches updated")

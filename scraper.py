@@ -162,6 +162,7 @@ class Scraper (WebScraping):
         self.__load_page__ ()
         self.__accept_cookies__ ()
         self.__display_events__ ()
+        self.refresh_selenium ()
         
         self.go_bottom ()
         
@@ -216,7 +217,7 @@ class Scraper (WebScraping):
             self.translate_status = json_data["status"]
             self.translate_countries = json_data["countries"]
             self.translate_leagues = json_data["leagues"]
-            
+    
     def __extract_data_loop__ (self, selectors:dict) -> dict:
         """ Try multiple times to extract data in loop, and validate integrity 
         
@@ -240,10 +241,10 @@ class Scraper (WebScraping):
             data = {}
         
             lengths = []         
-            for item, selectors in selectors.items():
+            for item, selector in selectors.items():
                 
                 # Get data
-                texts = self.get_texts (selectors)
+                texts = self.get_texts (selector)
                 
                 # Save data
                 data[item] = texts    
@@ -254,7 +255,7 @@ class Scraper (WebScraping):
             if all (length == avg for length in lengths) and avg > 0:
                 return data
             else:
-                sleep (3)
+                self.refresh_selenium ()
                 continue
         
         # Logs error

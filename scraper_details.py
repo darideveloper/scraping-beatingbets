@@ -124,10 +124,13 @@ class ScraperDetails (Scraper):
                     THREADS_STATUS["details"] = "ended"
                     break
             
-                logger.info ("* (details) Scraping odds...")
+                logger.info ("(details) Scraping odds...")
                 
                 # Loop groups
-                for match_group in Scraper.matches_groups:
+                for match_group_data in Scraper.matches_groups:
+                    
+                    match_group = match_group_data.copy ()
+                    
                     matches_indexes = match_group["matches_indexes"]
                     
                     matches_data = match_group["matches_data"]
@@ -200,9 +203,8 @@ class ScraperDetails (Scraper):
                         if THREADS_STATUS["basic"] == "kill":
                             quit ()
                 
-                # Save data in db
-                logger.info ("(details) Saving in db...")
-                self.db.save_details_odds (Scraper.matches_groups)
+                    # Save data in db
+                    self.db.save_details_odds ([match_group])
                 
                 # refresh
                 self.refresh_selenium ()    
