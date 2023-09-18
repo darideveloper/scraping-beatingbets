@@ -126,6 +126,9 @@ class ScraperDetails (Scraper):
             
                 logger.info ("(details) Scraping odds...")
                 
+                # Display events (again)
+                self.__display_events__ ()
+                
                 # Loop groups
                 for match_group_data in Scraper.matches_groups:
                     

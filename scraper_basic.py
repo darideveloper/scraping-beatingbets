@@ -28,6 +28,9 @@ class ScraperBasic (Scraper):
         
         logger.info ("(basic) Scraping teams and ids...")
         
+        # Display events (again)
+        self.__display_events__ ()
+        
         # Loop each match group
         for match_group in Scraper.matches_groups:
             
@@ -99,6 +102,9 @@ class ScraperBasic (Scraper):
                     break
             
                 logger.info ("(basic) Scraping odds...")
+                
+                # Display events (again)
+                self.__display_events__ ()
                 
                 # Loop each match group
                 for match_group_data in Scraper.matches_groups:

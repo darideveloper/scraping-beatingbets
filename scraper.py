@@ -257,7 +257,7 @@ class Scraper (WebScraping):
                 lengths.append (len(texts))
                 
             # Validate data integrit (all registers must have same length)
-            avg = sum(lengths) / len(lengths)
+            avg = int(sum(lengths) / len(lengths))
             if all (length == avg for length in lengths) and avg > 0:
                 return data
             else:
