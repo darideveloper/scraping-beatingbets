@@ -265,7 +265,7 @@ class Scraper (WebScraping):
                 continue
         
         # Logs error
-        logger.error ("(basic) ERROR: data integrity error. Restarting...")
+        logger.error ("(basic) Data integrity lost. Restarting...")
         logger.debug (f"lengths: {lengths}")
         logger.debug (f"data: {data}")
         

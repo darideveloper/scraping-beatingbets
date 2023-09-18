@@ -187,7 +187,7 @@ class ScraperBasic (Scraper):
                         
                         
             except Exception as e:
-                logger.error (f"(basic) ERROR: connection error, restarting window... ")
+                logger.error (f"(basic) connection lost, restarting window... ")
                 logger.debug (e)
                 
                 # Try to kill chrome

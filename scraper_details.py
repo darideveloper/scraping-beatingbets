@@ -182,7 +182,7 @@ class ScraperDetails (Scraper):
                             dc_x1, dc_12, dc_x2 = self.__get_double_chance__()
                             aa, na = self.__get_both_teams_to_score__()
                         except:
-                            logger.error (f"(details) ERROR: Odds not found in match: '{current_url}', skipped")
+                            logger.error (f"(details) Odds not found in match: '{current_url}', skipped")
                         
                         # Return to home page
                         self.close_tab ()
@@ -209,7 +209,7 @@ class ScraperDetails (Scraper):
                 # refresh
                 self.refresh_selenium ()    
             except Exception as e:
-                logger.error (f"(details) ERROR: connection error, restarting window... ")
+                logger.error (f"(details) Connection lost, restarting window... ")
                 logger.debug (e)
                 
                 # Try to kill chrome

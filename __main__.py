@@ -68,7 +68,7 @@ def main ():
                 quit ()
         
         except Exception as e:
-            logger.error (f"Error starting scraper. Restarting scraper...")
+            logger.error (f"Can't starting scraper. Restarting scraper...")
             logger.debug (e)
             continue    
         
