@@ -237,6 +237,8 @@ class Scraper (WebScraping):
             }
         """
         
+        self.__display_events__ ()
+        
         for _ in range (3):
             
             data = {}
@@ -258,7 +260,12 @@ class Scraper (WebScraping):
                 
             # Validate data integrit (all registers must have same length)
             avg = int(sum(lengths) / len(lengths))
-            if all (length == avg for length in lengths) and avg > 0:
+            
+            # Skip no data found
+            if avg == 0:
+                continue
+            
+            if all (length == avg for length in lengths) and avg:
                 return data
             else:
                 self.refresh_selenium ()
