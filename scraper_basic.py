@@ -178,10 +178,14 @@ class ScraperBasic (Scraper):
                         match_data["c3"] = data["c3"][index]
                         match_data["score"] = score
                         
+                        # Get steams
+                        team_home = match_data["home_team"]
+                        team_away = match_data["away_team"]
+                        
                         # Delete if all scores are "-"
                         if match_data["c1"] == "-" and match_data["c2"] == "-" and match_data["c3"] == "-":
                             
-                            logger.error (f"(basic): skipping match {id} (all quotes are '-')")
+                            logger.error (f"(basic): skipping match {team_home} - {team_away} because all scores are '-'")
                             
                             # Delete match id from original data
                             del match_group_data["matches_indexes"][index - deleted_rows]
