@@ -109,6 +109,7 @@ class Database (MySQL):
         for match_group in matches_groups:
   
             matches_data = match_group["matches_data"]
+            league = match_group["league"]
             
             # Only update existing matches
             saved_ids = self.__get_saved_ids__ (matches_data)
@@ -149,7 +150,7 @@ class Database (MySQL):
                 
                 matches_updated += 1
         
-        logger.info (f"* (basic) {matches_updated} matches updated in odds")
+        logger.info (f"* (basic) {matches_updated} matches updated in odds from {league}")
         
     def save_details_odds (self, matches_groups:list): 
         
@@ -158,6 +159,7 @@ class Database (MySQL):
         for match_group in matches_groups:
   
             matches_data = match_group["matches_data"]
+            league = match_group["league"]
             
             # Only update existing matches
             saved_ids = self.__get_saved_ids__ (matches_data)
@@ -202,7 +204,7 @@ class Database (MySQL):
                 
                 matches_updated += 1
         
-        logger.info (f"* (details) {matches_updated} matches updated")
+        logger.info (f"* (details) {matches_updated} matches updated from {league}")
         
     def delete_match (self, id_web:str):
         """ Delete match from db
