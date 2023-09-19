@@ -251,6 +251,11 @@ class Scraper (WebScraping):
                 if "score" in item and "" in texts: 
                     # Replace all empty scores with "-"
                     texts = list(map(lambda text: text if text != "" else "-", texts))
+                    
+                # Fix quotes
+                if "c" in item:
+                    # Clean quotes
+                    texts = list(map(lambda text: text.lower().strip(), texts))
                 
                 # Save data
                 data[item] = texts    
