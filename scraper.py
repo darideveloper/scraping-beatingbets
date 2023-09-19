@@ -75,7 +75,7 @@ class Scraper (WebScraping):
                     "under": "a:nth-child(4) > span",                     
                 },
                 "double_chance": {
-                    "base": "#detail > div:nth-child(7) > div.oddsTab__tableWrapper > div > div.ui-table__body > div:nth-child(1) > a",
+                    "base": "#detail div.oddsTab__tableWrapper .ui-table__row > a",
                     "sufix": "> span",
                 },
                 "both_teams_to_score": {

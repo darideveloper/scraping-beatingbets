@@ -205,7 +205,7 @@ class Database (MySQL):
                                         
                     continue
                 
-                # Insert new match
+                # Update match
                 query = f""" Update {DB_TABLE} 
                     SET 
                         over15 = '{over_15}',
