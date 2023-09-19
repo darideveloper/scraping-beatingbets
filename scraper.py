@@ -196,9 +196,7 @@ class Scraper (WebScraping):
             except Exception as err:
                 logger.debug (f"Can't click in display button: {err}")
                 pass       
-            
-        self.refresh_selenium ()
-        
+                    
     def __load_filters__ (self): 
         """ Load country, leagues and translations from json """
         

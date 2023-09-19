@@ -94,7 +94,7 @@ def main ():
             THREADS_STATUS["details"] = "ending"
         
         # Wait until threads end
-        # THREAD_BASIC.join ()
+        THREAD_BASIC.join ()
         THREAD_DETAILS.join ()
         print ()    
         

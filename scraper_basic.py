@@ -125,7 +125,7 @@ class ScraperBasic (Scraper):
                     last_index = page_indexes[-1]
                     
                     # Get all matches data
-                    selector_matches = f"{self.selectors['row']}:nth-child(n+{first_index}):nth-child(-n+{last_index})"
+                    selector_matches = f"{self.selectors['row']}:nth-child(n+{first_index}):nth-child(-n+{last_index+1})"
                     selector_time = f"{selector_matches} {self.selectors['time']}"
                     selector_c1 = f"{selector_matches} {self.selectors['c1']}"
                     selector_c2 = f"{selector_matches} {self.selectors['c2']}"
@@ -188,8 +188,8 @@ class ScraperBasic (Scraper):
                         # Wait before next scrape
                         sleep (WAIT_TIME_BASIC)
                         
-                        # refresh
-                        self.refresh_selenium ()    
+                # refresh
+                self.refresh_selenium ()    
                         
                         
             except Exception as e:
