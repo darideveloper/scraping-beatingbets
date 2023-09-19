@@ -223,9 +223,6 @@ class ScraperDetails (Scraper):
                         except:
                             logger.error (f"(details) Odds not found in match: '{match_id}', skipped")
                             
-                            # Delete match id from original data
-                            match_group_data["matches_indexes"].remove (index)
-                            
                             # Delete from db
                             self.db.delete_match (match_id)
                         
