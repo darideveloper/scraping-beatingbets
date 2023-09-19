@@ -134,16 +134,6 @@ class Database (MySQL):
                     
                     # Delete from matches_groups
                     pos_match = matches_data.index (match_data)
-                    del matches_data[pos_match]
-                    del match_group["matches_indexes"][pos_match]
-                    
-                    # Delete from db
-                    query = f"DELETE FROM {DB_TABLE} WHERE id_web = '{id_web}'"
-                    self.run_sql (query)
-                    
-                    logger.info (f"(basic) Match {id_web} deleted (all quotes are '-')")
-                    
-                    continue
                 
                 # Insert new match
                 query = f""" Update {DB_TABLE} 
@@ -187,21 +177,10 @@ class Database (MySQL):
                 aa = match_data.get("aa", "")
                 na = match_data.get("na", "")
                 
-                # Validate data
+                # TODO: DELETE SECTION Validate data
                 if not (over_15 and over_25 and under_25 and under_35 \
                     and dc_x1 and dc_12 and dc_x2 and aa and na):
                     logger.error (f"(details) Odds not found {id_web}")
-                    
-                    # Delete match from matches_groups
-                    index = match_data["index"]
-                    match_group["matches_data"].remove (match_data)
-                    match_group["matches_indexes"].remove (index)
-                    
-                    # Delete from db
-                    query = f"DELETE FROM {DB_TABLE} WHERE id_web = '{id_web}'"
-                    self.run_sql (query)
-                    
-                    logger.info (f"(basic) Match {id_web} deleted (quotes not found)")
                                         
                     continue
                 
@@ -224,3 +203,14 @@ class Database (MySQL):
                 matches_updated += 1
         
         logger.info (f"* (details) {matches_updated} matches updated")
+        
+    def delete_match (self, id_web:str):
+        """ Delete match from db
+
+        Args:
+            id_web (str): id of match to delete
+        """
+        
+        # Delete from db
+        query = f"DELETE FROM {DB_TABLE} WHERE id_web = '{id_web}'"
+        self.run_sql (query)

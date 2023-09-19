@@ -53,7 +53,7 @@ def main ():
             
             # Scraper basic odds in thread
             THREAD_BASIC = Thread(target=scraper_basic.scrape_basic_oods)
-            THREAD_BASIC.start()
+            # THREAD_BASIC.start()
             
             # Kill thread
             if THREADS_STATUS["main"] == "kill":
@@ -94,7 +94,7 @@ def main ():
             THREADS_STATUS["details"] = "ending"
         
         # Wait until threads end
-        THREAD_BASIC.join ()
+        # THREAD_BASIC.join ()
         THREAD_DETAILS.join ()
         print ()    
         

@@ -154,6 +154,7 @@ class ScraperBasic (Scraper):
                         break
                     
                     # Format and save each match data
+                    deleted_rows = 0
                     for index, id in enumerate (ids):
                         
                         # Format score
@@ -176,6 +177,22 @@ class ScraperBasic (Scraper):
                         match_data["c2"] = data["c2"][index]
                         match_data["c3"] = data["c3"][index]
                         match_data["score"] = score
+                        
+                        # Delete if all scores are "-"
+                        if match_data["c1"] == "-" and match_data["c2"] == "-" and match_data["c3"] == "-":
+                            
+                            logger.error (f"(basic): skipping match {id} (all quotes are '-')")
+                            
+                            # Delete match id from original data
+                            del match_group_data["matches_indexes"][index - deleted_rows]
+                            
+                            # Delete from db
+                            self.db.delete_match (id)
+                            
+                            # Rmeove from match group
+                            match_group["matches_data"].remove (match_data)
+                            
+                            deleted_rows += 1
                     
                     # Force kill thread
                     if THREADS_STATUS["basic"] == "kill":

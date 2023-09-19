@@ -71,8 +71,11 @@ class ScraperDetails (Scraper):
                 break
         
             sleep (1)
-            self.refresh_selenium ()
+            self.refresh_selenium (back_tab=-1)
         
+        
+        if not (over_15 and over_25 and under_25 and under_35):
+            raise Exception ("Odds not found")
         
         return (over_15, over_25, under_25, under_35)
     
@@ -101,8 +104,12 @@ class ScraperDetails (Scraper):
             if dc_x1 and dc_12 and dc_x2:
                 break
             
-            sleep (1)
-            self.refresh_selenium ()
+            self.driver.refresh ()          
+            sleep (2)
+            self.refresh_selenium (back_tab=-1)
+            
+        if not (dc_x1 and dc_12 and dc_x2):
+            raise Exception ("Odds not found")
         
         return (dc_x1, dc_12, dc_x2)
     
@@ -130,7 +137,10 @@ class ScraperDetails (Scraper):
                 break
             
             sleep (1)
-            self.refresh_selenium ()
+            self.refresh_selenium (back_tab=-1)
+        
+        if not (aa and na):
+            raise Exception ("Odds not found")
         
         return (aa, na)
 
@@ -162,6 +172,7 @@ class ScraperDetails (Scraper):
                     matches_indexes = match_group["matches_indexes"]
                     
                     matches_data = match_group["matches_data"]
+                    matches_data_new = []
                     
                     # Loop matches
                     for index in matches_indexes: 
@@ -210,7 +221,13 @@ class ScraperDetails (Scraper):
                             dc_x1, dc_12, dc_x2 = self.__get_double_chance__()
                             aa, na = self.__get_both_teams_to_score__()
                         except:
-                            logger.error (f"(details) Odds not found in match: '{current_url}', skipped")
+                            logger.error (f"(details) Odds not found in match: '{match_id}', skipped")
+                            
+                            # Delete match id from original data
+                            match_group_data["matches_indexes"].remove (index)
+                            
+                            # Delete from db
+                            self.db.delete_match (match_id)
                         
                         # Return to home page
                         self.close_tab ()
@@ -227,12 +244,17 @@ class ScraperDetails (Scraper):
                         match_data["aa"] = aa
                         match_data["na"] = na
                         
+                        # Save new match data
+                        matches_data_new.append (match_data)
+                        
                         # Force kill thread
                         if THREADS_STATUS["basic"] == "kill":
-                            quit ()
+                            quit ()                                   
                 
                     # Save data in db
-                    self.db.save_details_odds ([match_group])
+                    if matches_data_new:
+                        match_group["matches_data"] = matches_data_new
+                        self.db.save_details_odds ([match_group])
                 
                 # refresh
                 self.refresh_selenium ()    
