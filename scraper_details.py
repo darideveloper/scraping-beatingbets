@@ -18,7 +18,7 @@ class ScraperDetails (Scraper):
         
     def __set_page_wait__ (self, link:str):
         self.set_page (link)
-        sleep (3)
+        sleep (4)
         self.refresh_selenium (back_tab=1)     
 
     def __get_over_under__ (self) -> tuple:
@@ -41,29 +41,38 @@ class ScraperDetails (Scraper):
         under_25 = ""
         under_35 = ""
         
-        for index in range (1, len(bookmarkers)): 
+        # Try to extract data 3 times
+        for _ in range (3):
             
+            for index in range (1, len(bookmarkers)): 
             
-            selector_base = f"{selector_bookmarker}:nth-child({index}) {selectors_ou['base']}:nth-child(1)"
-                                            
-            selector_total = f"{selector_base} {selectors_ou['total']}"
-            total = self.get_text (selector_total)
-                                            
-            selector_over = f"{selector_base} {selectors_ou['over']}"
-            selector_under = f"{selector_base} {selectors_ou['under']}"
-                            
-            if total == "1.5": 
-                over_15 = self.get_text(selector_over)
+                selector_base = f"{selector_bookmarker}:nth-child({index}) {selectors_ou['base']}:nth-child(1)"
+                                                
+                selector_total = f"{selector_base} {selectors_ou['total']}"
+                total = self.get_text (selector_total)
+                                                
+                selector_over = f"{selector_base} {selectors_ou['over']}"
+                selector_under = f"{selector_base} {selectors_ou['under']}"
+                                
+                if total == "1.5": 
+                    over_15 = self.get_text(selector_over)
+                    
+                if total == "2.5": 
+                    over_25 = self.get_text(selector_over)
+                    under_25 = self.get_text(selector_under)
                 
-            if total == "2.5": 
-                over_25 = self.get_text(selector_over)
-                under_25 = self.get_text(selector_under)
+                if total == "3.5": 
+                    under_35 = self.get_text(selector_under)    
+                    
+                if over_15 and over_25 and under_25 and under_35:
+                    break  
             
-            if total == "3.5": 
-                under_35 = self.get_text(selector_under)    
-                
             if over_15 and over_25 and under_25 and under_35:
                 break
+        
+            sleep (1)
+            self.refresh_selenium ()
+        
         
         return (over_15, over_25, under_25, under_35)
     
@@ -82,11 +91,19 @@ class ScraperDetails (Scraper):
         selector_dc_x1 = f"{selectors_dc['base']}:nth-child(2) {selectors_dc['sufix']}"
         selector_dc_12 = f"{selectors_dc['base']}:nth-child(3) {selectors_dc['sufix']}"
         selector_dc_x2 = f"{selectors_dc['base']}:nth-child(4) {selectors_dc['sufix']}"
+        
+        # Try to extract data 3 times
+        for _ in range (3):
+            dc_x1 = self.get_text(selector_dc_x1)
+            dc_12 = self.get_text(selector_dc_12)
+            dc_x2 = self.get_text(selector_dc_x2)
             
-        dc_x1 = self.get_text(selector_dc_x1)
-        dc_12 = self.get_text(selector_dc_12)
-        dc_x2 = self.get_text(selector_dc_x2)
-    
+            if dc_x1 and dc_12 and dc_x2:
+                break
+            
+            sleep (1)
+            self.refresh_selenium ()
+        
         return (dc_x1, dc_12, dc_x2)
     
     def __get_both_teams_to_score__ (self) -> tuple:
@@ -104,8 +121,16 @@ class ScraperDetails (Scraper):
         selector_aa = f"{selectors_bts['base']}:nth-child(2) {selectors_bts['sufix']}"
         selector_na = f"{selectors_bts['base']}:nth-child(3) {selectors_bts['sufix']}"                     
         
-        aa = self.get_text (selector_aa)
-        na = self.get_text (selector_na)
+        # Try to extract data 3 times
+        for _ in range (3):
+            aa = self.get_text (selector_aa)
+            na = self.get_text (selector_na)
+            
+            if aa and na:
+                break
+            
+            sleep (1)
+            self.refresh_selenium ()
         
         return (aa, na)
 
