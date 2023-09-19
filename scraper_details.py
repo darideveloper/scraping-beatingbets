@@ -216,19 +216,27 @@ class ScraperDetails (Scraper):
                         self.switch_to_tab (1)
                         
                         # Get odds data
+                        error = False
                         try:
                             over_15, over_25, under_25, under_35 = self.__get_over_under__()
                             dc_x1, dc_12, dc_x2 = self.__get_double_chance__()
                             aa, na = self.__get_both_teams_to_score__()
                         except:
-                            logger.error (f"(details) Odds not found in match: '{match_id}', skipped")
+                            logger.error (f"(details) Odds not found in match {team1} - {team2}, skipped")
                             
                             # Delete from db
                             self.db.delete_match (match_id)
+                            
+                            error = True
+
                         
                         # Return to home page
                         self.close_tab ()
                         self.switch_to_tab (0) 
+                        
+                        # Skip if error
+                        if error:
+                            continue
                         
                         # Save data in match group
                         match_data["over_15"] = over_15
