@@ -53,7 +53,7 @@ class Scraper (WebScraping):
         self.selectors_pages = {
             "soccer24": {
                 "cookies": "#onetrust-accept-btn-handler",
-                "display_events": ".event__expander.icon--expander.expand",
+                "display_events": ".arrow.event__expander.event__expander--close",
                 "class_event_header": "event__header",
                 "row": "#live-table > section > div > div > div",
                 "country": "div.icon--flag div span:nth-child(1)",
