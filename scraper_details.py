@@ -165,13 +165,11 @@ class ScraperDetails (Scraper):
                 self.__display_events__ ()
                 
                 # Loop groups
-                for match_group_data in Scraper.matches_groups:
-                    
-                    match_group = match_group_data.copy ()
-                    
+                for match_group in Scraper.matches_groups:
+                                        
                     matches_indexes = match_group["matches_indexes"]
                     
-                    matches_data = match_group["matches_data"]
+                    matches_data = match_group["matches_data"][:]
                     matches_data_new = []
                     
                     # Loop matches
@@ -260,6 +258,11 @@ class ScraperDetails (Scraper):
                     if matches_data_new:
                         match_group["matches_data"] = matches_data_new
                         self.db.save_details_odds ([match_group])
+                        
+                        # Restar match group
+                        match_group["matches_data"] = matches_data
+                        
+                        print ()
                 
                 # refresh
                 self.refresh_selenium ()    
