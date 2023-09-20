@@ -226,14 +226,6 @@ class ScraperBasic (Scraper):
                 logger.error (f"(basic) connection lost, restarting window... ")
                 logger.debug (e)
                 
-                # Try to kill chrome
-                try:
-                    self.kill ()
-                except:
-                    pass
-                
                 # Restar class
                 self.__init__ ()                
             
-        # Kill chrome instances when ends
-        self.kill ()

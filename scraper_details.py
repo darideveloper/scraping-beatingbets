@@ -227,7 +227,6 @@ class ScraperDetails (Scraper):
                             
                             error = True
 
-                        
                         # Return to home page
                         self.close_tab ()
                         self.switch_to_tab (0) 
@@ -266,18 +265,11 @@ class ScraperDetails (Scraper):
                 
                 # refresh
                 self.refresh_selenium ()    
+                
             except Exception as e:
                 logger.error (f"(details) Connection lost, restarting window... ")
                 logger.debug (e)
                 
-                # Try to kill chrome
-                try:
-                    self.kill ()
-                except:
-                    pass
-                
                 # Restar class
                 self.__init__ ()
                             
-        # Kill chrome instances when ends
-        self.kill ()
