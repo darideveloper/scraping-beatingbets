@@ -94,7 +94,7 @@ class ScraperBasic (Scraper):
         running = True
         while running:
                         
-            # try:
+            try:
                 
                 # End if status is ending and details already end
                 if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "ended":
@@ -222,18 +222,18 @@ class ScraperBasic (Scraper):
                 self.refresh_selenium ()    
                         
                         
-            # except Exception as e:
-            #     logger.error (f"(basic) connection lost, restarting window... ")
-            #     logger.debug (e)
+            except Exception as e:
+                logger.error (f"(basic) connection lost, restarting window... ")
+                logger.debug (e)
                 
-            #     # Try to kill chrome
-            #     try:
-            #         self.kill ()
-            #     except:
-            #         pass
+                # Try to kill chrome
+                try:
+                    self.kill ()
+                except:
+                    pass
                 
-            #     # Restar class
-            #     self.__init__ ()                
+                # Restar class
+                self.__init__ ()                
             
         # Kill chrome instances when ends
         self.kill ()
