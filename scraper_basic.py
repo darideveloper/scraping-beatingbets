@@ -94,7 +94,7 @@ class ScraperBasic (Scraper):
         running = True
         while running:
                         
-            try:
+            # try:
                 
                 # End if status is ending and details already end
                 if THREADS_STATUS["basic"] == "ending" and THREADS_STATUS["details"] == "ended":
@@ -109,7 +109,9 @@ class ScraperBasic (Scraper):
                 # Loop each match group
                 for match_group_data in Scraper.matches_groups:
                     
-                    match_group = match_group_data.copy ()
+                    match_group = match_group_data
+                    matches_data = match_group["matches_data"][:]
+                    matches_data_new = []
                     
                     # Force kill thread
                     if THREADS_STATUS["basic"] == "kill":
@@ -166,24 +168,16 @@ class ScraperBasic (Scraper):
                             score = "none"
                     
                         # Get current match by id
-                        match_data = list(filter(lambda match: match["id"] == id, match_group["matches_data"]))
+                        match_data = list(filter(lambda match: match["id"] == id, matches_data))
                         if len(match_data) == 0:
                             continue
-                        match_data = match_data[0]
-                        
-                        # Update match data
-                        match_data["time"] = data["time"][index]
-                        match_data["c1"] = data["c1"][index]
-                        match_data["c2"] = data["c2"][index]
-                        match_data["c3"] = data["c3"][index]
-                        match_data["score"] = score
-                        
-                        # Get steams
-                        team_home = match_data["home_team"]
-                        team_away = match_data["away_team"]
+                        match_data = match_data[0].copy()
                         
                         # Delete if all scores are "-"
-                        if match_data["c1"] == "-" and match_data["c2"] == "-" and match_data["c3"] == "-":
+                        if data["c1"][index] == "-" and data["c2"][index] == "-" and data["c3"][index] == "-":
+                            
+                            team_home = match_data["home_team"]
+                            team_away = match_data["away_team"]
                             
                             logger.error (f"(basic): skipping match {team_home} - {team_away} because all scores are '-'")
                             
@@ -197,34 +191,49 @@ class ScraperBasic (Scraper):
                             match_group["matches_data"].remove (match_data)
                             
                             deleted_rows += 1
-                    
+                            
+                            continue
+                            
+                        # Update match data
+                        match_data["time"] = data["time"][index]
+                        match_data["c1"] = data["c1"][index]
+                        match_data["c2"] = data["c2"][index]
+                        match_data["c3"] = data["c3"][index]
+                        match_data["score"] = score
+                        
+                        matches_data_new.append (match_data)
+                        
                     # Force kill thread
                     if THREADS_STATUS["basic"] == "kill":
                         quit ()
                 
                     # Save data in db
-                    if running:
+                    if running and matches_data_new:
+                        match_group["matches_data"] = matches_data_new
                         self.db.save_basic_odds ([match_group])
                         
                         # Wait before next scrape
                         sleep (WAIT_TIME_BASIC)
                         
+                        # Restar match group
+                        match_group["matches_data"] = matches_data
+                        
                 # refresh
                 self.refresh_selenium ()    
                         
                         
-            except Exception as e:
-                logger.error (f"(basic) connection lost, restarting window... ")
-                logger.debug (e)
+            # except Exception as e:
+            #     logger.error (f"(basic) connection lost, restarting window... ")
+            #     logger.debug (e)
                 
-                # Try to kill chrome
-                try:
-                    self.kill ()
-                except:
-                    pass
+            #     # Try to kill chrome
+            #     try:
+            #         self.kill ()
+            #     except:
+            #         pass
                 
-                # Restar class
-                self.__init__ ()                
+            #     # Restar class
+            #     self.__init__ ()                
             
         # Kill chrome instances when ends
         self.kill ()
