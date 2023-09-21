@@ -1,8 +1,8 @@
 import os
 from time import sleep
 from threading import Thread
+from datetime import datetime
 from scraper import Scraper
-from scraper import THREADS_STATUS
 from scraper_basic import ScraperBasic
 from scraper_details import ScraperDetails
 from logs import logger
@@ -18,18 +18,18 @@ THREAD_DETAILS = None
 def main ():
     """ Start scraper with threads """
     
-    global THREADS_STATUS
     global THREAD_BASIC
     global THREAD_DETAILS
-    
-    THREADS_STATUS["main"] = "running"
+
+    scraper = Scraper()
     
     while True:
+        
+        Scraper.threads_status["main"] = "running"
         
         try:
         
             # Load matches
-            scraper = Scraper()
             scraper.load_matches ()
             scraper.kill ()
             
@@ -38,7 +38,7 @@ def main ():
             scraper_details = ScraperDetails()
             
             # Kill thread
-            if THREADS_STATUS["main"] == "kill":
+            if Scraper.threads_status["main"] == "kill":
                 quit ()
             
             # Scrape general data only one time
@@ -48,7 +48,7 @@ def main ():
             sleep (2)
             
             # Kill thread
-            if THREADS_STATUS["main"] == "kill":
+            if Scraper.threads_status["main"] == "kill":
                 quit ()
             
             # Scraper basic odds in thread
@@ -56,7 +56,7 @@ def main ():
             THREAD_BASIC.start()
             
             # Kill thread
-            if THREADS_STATUS["main"] == "kill":
+            if Scraper.threads_status["main"] == "kill":
                 quit ()
             
             # Scraper details odds in thread
@@ -64,12 +64,12 @@ def main ():
             THREAD_DETAILS.start ()
             
             # Kill thread
-            if THREADS_STATUS["main"] == "kill":
+            if Scraper.threads_status["main"] == "kill":
                 quit ()
         
         except Exception as e:
             logger.error (f"Can't starting scraper. Restarting scraper...")
-            logger.debug (e)
+            logger.error (e)
             continue    
         
         # End threads after reopen time
@@ -77,12 +77,16 @@ def main ():
         for _ in range (MINUTES_REOPEN*60):
             
             # Detect killed by user
-            if THREADS_STATUS["main"] == "kill":
+            if Scraper.threads_status["main"] == "kill":
                 quit ()
             
             # Detect restart from threads
-            if THREADS_STATUS["main"] == "restart":
+            if Scraper.threads_status["main"] == "restart":
                 restarted = True
+                break
+            
+            # Validte if threads keep running
+            if not (THREAD_BASIC.is_alive() and THREAD_DETAILS.is_alive()):
                 break
             
             sleep (1)
@@ -90,29 +94,28 @@ def main ():
         # Regular rnd thread after time
         if not restarted:
             logger.info ("\nRestarting scraper...\n")
-            THREADS_STATUS["basic"] = "ending"
-            THREADS_STATUS["details"] = "ending"
+            Scraper.threads_status["basic"] = "ending"
+            Scraper.threads_status["details"] = "ending"
         
         # Wait until threads end
         THREAD_BASIC.join ()
         THREAD_DETAILS.join ()
-        print ()    
         
         # Kill all chrome process for windows
+        sleep (120)
         os.system("taskkill /f /im chrome.exe")
-    
+
 if __name__ == "__main__":
     
     # Start main thread
     THREAD_MAIN = Thread(target=main)
     THREAD_MAIN.start ()
     
-    
     user_input = input("\nPress 'q' to stop scraper...\n")
     if user_input.lower().strip() == "q":
-        THREADS_STATUS["basic"] = "kill"
-        THREADS_STATUS["details"] = "kill"
-        THREADS_STATUS["main"] = "kill"
+        Scraper.threads_status["basic"] = "kill"
+        Scraper.threads_status["details"] = "kill"
+        Scraper.threads_status["main"] = "kill"
         print ("\nStopping scraper, wait a moment...\n")
         
         # Join threads

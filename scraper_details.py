@@ -1,7 +1,6 @@
 from time import sleep
 from logs import logger
 from scraper import Scraper
-from scraper import THREADS_STATUS
 
 class ScraperDetails (Scraper): 
     
@@ -148,128 +147,128 @@ class ScraperDetails (Scraper):
         """ Scraper odds data from details page in loop """
         
         # Update global status
-        global THREADS_STATUS
-        THREADS_STATUS["details"] = "running"
+        Scraper.threads_status["details"] = "running"
         
+        is_running = True
         while True:
             
-            try:
-                # End if status is ending and details already end
-                if THREADS_STATUS["details"] == "ending":
-                    THREADS_STATUS["details"] = "ended"
-                    break
+            # End if status is ending and details already end
+            if Scraper.threads_status["details"] == "ending":
+                Scraper.threads_status["details"] = "ended"                
+                break
+        
+            logger.info ("(details) Scraping odds...")
             
-                logger.info ("(details) Scraping odds...")
+            # Display events (again)
+            self.__display_events__ ()
+            
+            # Loop groups
+            for match_group in Scraper.matches_groups:
                 
-                # Display events (again)
-                self.__display_events__ ()
+                    
+                # get matches data
+                matches_indexes = match_group["matches_indexes"]
+                matches_data = match_group["matches_data"][:]
+                matches_data_new = []
                 
-                # Loop groups
-                for match_group in Scraper.matches_groups:
+                # Loop matches
+                for index in matches_indexes: 
+                    
+                    # validate restart time
+                    if self.__is_restart_time__():
+                        
+                        # Send restart signal
+                        Scraper.threads_status["main"] == "restart"
+                        quit ()
+                        
+                    # Force kill thread
+                    if Scraper.threads_status["details"] == "kill":
+                        quit ()
+                    
+                    # Selectors 
+                    selector_row = f"{self.selectors['row']}:nth-child({index})"
+                    selector_details_btn = f"{selector_row} {self.selectors['team_home']}"
+                    
+                    # Get current match data
+                    match_id = self.get_attrib (selector_row, "id")
+                    match_data = list(filter(lambda match: match["id"] == match_id, matches_data))
+                    if len(match_data) == 0:
+                        continue
+                    match_data = match_data[0]
+                    team1 = match_data["home_team"]
+                    team2 = match_data["away_team"]
+                    logger.info (f"(details) Scraping for {team1} - {team2}...")
                                         
-                    matches_indexes = match_group["matches_indexes"]
+                    # get details url
+                    self.click_js (selector_details_btn)
+                    self.switch_to_tab (1)
+                    current_url = self.driver.current_url
+                    url_end = str(current_url).find("/#/")
+                    details_url = str(current_url)[:url_end]
                     
-                    matches_data = match_group["matches_data"][:]
-                    matches_data_new = []
+                    # Generate odds link
+                    self.link_dc = f"{details_url}{self.odds_links['dc']}"
+                    self.link_ou = f"{details_url}{self.odds_links['ou']}"
+                    self.link_bts = f"{details_url}{self.odds_links['bts']}"
                     
-                    # Loop matches
-                    for index in matches_indexes: 
+                    # Close pop window
+                    self.close_tab ()
+                    self.switch_to_tab (0)
+                    
+                    # Create and twitch to new tab
+                    self.open_tab ()
+                    self.switch_to_tab (1)
+                    
+                    # Get odds data
+                    error = False
+                    try:
+                        over_15, over_25, under_25, under_35 = self.__get_over_under__()
+                        dc_x1, dc_12, dc_x2 = self.__get_double_chance__()
+                        aa, na = self.__get_both_teams_to_score__()
+                    except:
+                        logger.error (f"(details) Odds not found in match {team1} - {team2}, skipped")
                         
-                        # Force kill thread
-                        if THREADS_STATUS["details"] == "kill":
-                            quit ()
+                        # Delete from db
+                        self.db.delete_match (match_id)
                         
-                        # Selectors 
-                        selector_row = f"{self.selectors['row']}:nth-child({index})"
-                        selector_details_btn = f"{selector_row} {self.selectors['team_home']}"
-                        
-                        # Get current match data
-                        match_id = self.get_attrib (selector_row, "id")
-                        match_data = list(filter(lambda match: match["id"] == match_id, matches_data))
-                        if len(match_data) == 0:
-                            continue
-                        match_data = match_data[0]
-                        team1 = match_data["home_team"]
-                        team2 = match_data["away_team"]
-                        logger.info (f"(details) Scraping for {team1} - {team2}...")
-                                            
-                        # get details url
-                        self.click_js (selector_details_btn)
-                        self.switch_to_tab (1)
-                        current_url = self.driver.current_url
-                        url_end = str(current_url).find("/#/")
-                        details_url = str(current_url)[:url_end]
-                        
-                        # Generate odds link
-                        self.link_dc = f"{details_url}{self.odds_links['dc']}"
-                        self.link_ou = f"{details_url}{self.odds_links['ou']}"
-                        self.link_bts = f"{details_url}{self.odds_links['bts']}"
-                        
-                        # Close pop window
-                        self.close_tab ()
-                        self.switch_to_tab (0)
-                        
-                        # Create and twitch to new tab
-                        self.open_tab ()
-                        self.switch_to_tab (1)
-                        
-                        # Get odds data
-                        error = False
-                        try:
-                            over_15, over_25, under_25, under_35 = self.__get_over_under__()
-                            dc_x1, dc_12, dc_x2 = self.__get_double_chance__()
-                            aa, na = self.__get_both_teams_to_score__()
-                        except:
-                            logger.error (f"(details) Odds not found in match {team1} - {team2}, skipped")
-                            
-                            # Delete from db
-                            self.db.delete_match (match_id)
-                            
-                            error = True
+                        error = True
 
-                        # Return to home page
-                        self.close_tab ()
-                        self.switch_to_tab (0) 
-                        
-                        # Skip if error
-                        if error:
-                            continue
-                        
-                        # Save data in match group
-                        match_data["over_15"] = over_15
-                        match_data["over_25"] = over_25
-                        match_data["under_25"] = under_25
-                        match_data["under_35"] = under_35
-                        match_data["dc_x1"] = dc_x1
-                        match_data["dc_12"] = dc_12
-                        match_data["dc_x2"] = dc_x2
-                        match_data["aa"] = aa
-                        match_data["na"] = na
-                        
-                        # Save new match data
-                        matches_data_new.append (match_data)
-                        
-                        # Force kill thread
-                        if THREADS_STATUS["basic"] == "kill":
-                            quit ()                                   
-                
-                    # Save data in db
-                    if matches_data_new:
-                        match_group["matches_data"] = matches_data_new
-                        self.db.save_details_odds ([match_group])
-                        
-                        # Restar match group
-                        match_group["matches_data"] = matches_data
-                        
-                        print ()
-                
-                # refresh
-                self.refresh_selenium ()    
-                
-            except Exception as e:
-                logger.error (f"(details) Connection lost, restarting window... ")
-                logger.debug (e)
-                
-                # Restar class
-                self.__init__ ()
-                            
+                    # Return to home page
+                    self.close_tab ()
+                    self.switch_to_tab (0) 
+                    
+                    # Skip if error
+                    if error:
+                        continue
+                    
+                    # Save data in match group
+                    match_data["over_15"] = over_15
+                    match_data["over_25"] = over_25
+                    match_data["under_25"] = under_25
+                    match_data["under_35"] = under_35
+                    match_data["dc_x1"] = dc_x1
+                    match_data["dc_12"] = dc_12
+                    match_data["dc_x2"] = dc_x2
+                    match_data["aa"] = aa
+                    match_data["na"] = na
+                    
+                    # Save new match data
+                    matches_data_new.append (match_data)
+                    
+                    # Force kill thread
+                    if Scraper.threads_status["basic"] == "kill":
+                        quit ()                                   
+            
+                # Save data in db
+                if matches_data_new:
+                    match_group["matches_data"] = matches_data_new
+                    self.db.save_details_odds ([match_group])
+                    
+                    # Restar match group
+                    match_group["matches_data"] = matches_data
+                                
+            # refresh
+            self.refresh_selenium ()    
+            
+        # Kill all chrome instances
+        self.kill ()

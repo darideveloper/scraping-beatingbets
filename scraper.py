@@ -3,25 +3,27 @@ from selenium_wrapper.web_scraping import WebScraping
 import os
 import json
 from time import sleep
+from datetime import datetime
 from dotenv import load_dotenv
 from logs import logger
 from db import Database
-# from threading import Thread
 
 load_dotenv()
 PAGE = os.getenv("PAGE")
 HEADLESS = os.getenv("HEADLESS") == "true"
+RESTART_TIME = datetime.strptime(os.getenv("RESTART_TIME"), "%H:%M:%S")
 
 CURRENT_PATH = os.path.dirname(__file__)
 
-THREADS_STATUS = {
-    "basic": "idle", 
-    "details": "idle",
-    "main": "idle"
-}
 
 class Scraper (WebScraping): 
-    
+        
+    threads_status = {
+        "basic": "idle", 
+        "details": "idle",
+        "main": "idle"
+    }
+        
     # Scraping data
     matches_groups = []
     """ Structure of matches_groups:
@@ -46,8 +48,13 @@ class Scraper (WebScraping):
         """ Start scraper of the page
         """
         
+        self.restarted_today = False
+        
         # Instance database
         self.db = Database ()
+        
+        # Start datetime of the script
+        self.start_datetime = datetime.now()
         
         # Css selectors 
         self.selectors_pages = {
@@ -280,13 +287,37 @@ class Scraper (WebScraping):
         logger.debug (f"data: {data}")
         
         # Restart scraper
-        THREADS_STATUS["basic"] = "kill"
-        THREADS_STATUS["details"] = "kill"
-        THREADS_STATUS["main"] = "restart"
+        Scraper.threads_status["basic"] = "kill"
+        Scraper.threads_status["details"] = "kill"
+        Scraper.threads_status["main"] = "restart"
         
         return {}
             
-    
+    def __is_restart_time__ (self):
+        """ check if current time is after midnight """
+        
+        # Only restart one time
+        if self.restarted_today:
+            return False
+        
+        # Get times
+        now = datetime.now()
+        midnight = now.replace(
+            hour=RESTART_TIME.hour, 
+            minute=RESTART_TIME.minute,
+            second=RESTART_TIME.second,
+            microsecond=0, 
+            day=now.day
+        )
+        seconds = (midnight - now).total_seconds()
+        
+        # Validate if is after midnight
+        if seconds < 0:
+            self.restarted_today = True
+            return True
+        else:
+            return False
+
     def load_matches (self):
         """ Load matches and save country-ligue relation """
         

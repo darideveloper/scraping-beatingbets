@@ -649,10 +649,14 @@ class WebScraping ():
 
     def kill(self):
         """ Detect and close all tabs """
-        tabs = self.driver.window_handles
-        for _ in tabs:
-            self.switch_to_tab(0)
-            self.end_browser()
+        
+        try:
+            tabs = self.driver.window_handles
+            for _ in tabs:
+                self.switch_to_tab(0)
+                self.end_browser()
+        except:
+            pass
 
     def scroll(self, selector, scroll_x, scroll_y):
         """ Scroll X or Y in specific element of the page """
