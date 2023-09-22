@@ -106,7 +106,7 @@ class ScraperBasic (Scraper):
             for match_group_data in Scraper.matches_groups:
                 
                 # validate restart time
-                if self.__is_restart_time__():
+                if self.__is_restart_time__("basic"):
                     
                     # Send restart signal and exit
                     Scraper.threads_status["main"] == "restart"

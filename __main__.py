@@ -21,7 +21,6 @@ def main ():
     global THREAD_BASIC
     global THREAD_DETAILS
 
-    scraper = Scraper()
     
     while True:
         
@@ -30,6 +29,7 @@ def main ():
         try:
         
             # Load matches
+            scraper = Scraper()
             scraper.load_matches ()
             scraper.kill ()
             

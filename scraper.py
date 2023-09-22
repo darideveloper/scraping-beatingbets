@@ -18,7 +18,10 @@ CURRENT_PATH = os.path.dirname(__file__)
 
 class Scraper (WebScraping): 
         
-    last_restart = None
+    last_restart = {
+        "basic": None,
+        "details": None
+    }
     
     threads_status = {
         "basic": "idle", 
@@ -292,12 +295,16 @@ class Scraper (WebScraping):
         
         return {}
             
-    def __is_restart_time__ (self):
-        """ check if current time is after midnight """
+    def __is_restart_time__ (self, scraper_name:str):
+        """ check if current time is after midnight 
+        
+        Args:
+            scraper_name (str): Name of scraper (basic or details)
+        """
         
         # Only restart one time per day
         today = datetime.now().day
-        if Scraper.last_restart == today:
+        if Scraper.last_restart[scraper_name] == today:
             return False
         
         # Only restart one time
@@ -318,7 +325,7 @@ class Scraper (WebScraping):
         # Validate if is after midnight
         if seconds < 0:
             self.restarted_today = True
-            Scraper.last_restart = today
+            Scraper.last_restart[scraper_name] = today
             return True
         else:
             return False

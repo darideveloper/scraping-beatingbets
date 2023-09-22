@@ -175,7 +175,7 @@ class ScraperDetails (Scraper):
                 for index in matches_indexes: 
                     
                     # validate restart time
-                    if self.__is_restart_time__():
+                    if self.__is_restart_time__("details"):
                         
                         # Send restart signal
                         Scraper.threads_status["main"] == "restart"
